@@ -32,7 +32,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ ok: true, extension: EXTENSION_NAME });
     return false;
   }
-  if (!isTrustedExtensionPageSender(sender, chrome.runtime.id)) return false;
+  if (!isTrustedExtensionPageSender(sender, chrome.runtime.id)) {
+    console.warn("[" + EXTENSION_NAME + "] Rejected title operation from an untrusted sender.", {
+      senderId: sender?.id,
+      senderUrl: sender?.url,
+      senderDocumentUrl: sender?.documentUrl,
+      messageType: message.type,
+    });
+    sendResponse({ ok: false, reason: "The request did not originate from a TabRenamer page." });
+    return false;
+  }
 
   const payload = message.payload;
   if (!payload || !Number.isInteger(payload.tabId) || payload.tabId < 0) {
