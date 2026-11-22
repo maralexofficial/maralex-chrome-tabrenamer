@@ -1,11 +1,29 @@
 import { EXTENSION_NAME, MESSAGE_TYPES } from "../shared/constants.js";
 import { isExtensionMessage } from "../shared/messages.js";
+import { StorageService } from "../services/storage-service.js";
+import { TabService, registerTabLifecycleListeners } from "../services/tab-service.js";
+
+const storageService = new StorageService();
+const tabService = new TabService({ storageService });
+
+registerTabLifecycleListeners({ storageService });
 
 /**
- * Keep the service worker entry point deliberately small.
- * Feature-specific listeners are registered by their owning modules in
- * subsequent implementation phases.
+ * Reconcile session records with Chrome's current tab set whenever the
+ * service worker starts. This also cleans up records left behind by tabs
+ * closed while the worker was suspended.
  */
+async function reconcileOpenTabs() {
+  try {
+    const tabs = await tabService.getTabs();
+    await storageService.removeMissingTabs(tabs.map((tab) => tab.id));
+  } catch (error) {
+    console.error(`[${EXTENSION_NAME}] Failed to reconcile open tabs.`, error);
+  }
+}
+
+void reconcileOpenTabs();
+
 chrome.runtime.onInstalled.addListener((details) => {
   console.info(`[${EXTENSION_NAME}] Installed (reason: ${details.reason}).`);
 });
