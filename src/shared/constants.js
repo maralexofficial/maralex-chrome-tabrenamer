@@ -6,6 +6,8 @@ export const EXTENSION_NAME = "TabRenamer";
 
 export const MESSAGE_TYPES = Object.freeze({
   PING: "TABRENAMER/PING",
+  APPLY_TITLE: "TABRENAMER/APPLY_TITLE",
+  RESTORE_TITLE: "TABRENAMER/RESTORE_TITLE",
 });
 
 export const STORAGE_KEYS = Object.freeze({
