@@ -99,6 +99,12 @@ extension contexts.
 are enriched with `customTitle`, which is either the saved name or `null`.
 The URL is never used as an identity key.
 
+The popup requests the exact active-site origin from a direct user click and
+sends a validated title-operation message to the service worker. The worker
+re-reads the tab from Chrome, verifies the permission grant, applies the title,
+and performs all storage mutations through its single `StorageService`
+instance. This avoids popup/worker read-modify-write races.
+
 The lifecycle adapter registers:
 - `tabs.onRemoved`: remove the closed tab's record.
 - `tabs.onReplaced`: migrate the old tab's record to the replacement ID.
