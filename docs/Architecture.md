@@ -20,8 +20,9 @@ persistence across complete browser restarts are out of scope for v1.0.
 ### Manifest V3 service worker
 
 `src/background/service-worker.js` is the extension's event-driven
-coordination entry point. It must remain safe to suspend and restart. Persistent
-state must never depend on module-level variables in this worker.
+coordination entry point. It creates the storage and tab services, registers
+tab lifecycle listeners, and reconciles stored tab IDs with Chrome's current
+tab set whenever the worker starts. It must remain safe to suspend and restart.
 
 ### Popup
 
@@ -37,8 +38,10 @@ the user has granted access to the relevant site.
 
 ### Services
 
-- `tab-service.js`: Chrome Tabs API operations.
-- `storage-service.js`: persistence and tab-record lifecycle.
+- `storage-service.js`: session persistence, validation, serialized writes,
+  tab-record lifecycle, and stale-record cleanup.
+- `tab-service.js`: Chrome Tabs API facade, custom-title enrichment, and
+  lifecycle event registration.
 - `title-service.js`: title application and restoration coordination.
 
 ### Shared modules
@@ -49,13 +52,13 @@ used across extension contexts.
 ## Data ownership and persistence
 
 The v1.0 active-tab data store uses `chrome.storage.session`. Records are keyed
-by `tabId`, allowing two tabs with the same URL to have different names.
-The store survives service-worker suspension/restart but is cleared when the
-browser session ends or the extension is reloaded/disabled. Chrome can assign
-new tab IDs when restoring a browser session, so cross-restart restoration is
-not guaranteed and is explicitly not part of v1.0.
+by the decimal string form of `tabId`, allowing two tabs with the same URL to
+have different names. The store survives service-worker suspension/restart
+but is cleared when the browser session ends or the extension is reloaded or
+disabled. Chrome can assign new tab IDs when restoring a browser sessions, so
+cross-restart restoration is not guaranteed and is explicitly not part of v1.0.
 
-A record is expected to have this shape:
+A record has this shape:
 
 ```js
 {
@@ -68,8 +71,39 @@ A record is expected to have this shape:
 }
 ```
 
-The implementation must validate tab IDs and custom titles at service
-boundaries. Removing a tab must remove its corresponding record.
+### Storage service guarantees
+
+- Tab IDs must be non-negative integers.
+- Custom titles are trimmed and validated against the shared 1–80 character
+  limit.
+- Mutations through the service-worker-owned service instance are serialized
+  to prevent overlapping read-modify-write operations from losing updates.
+- Repeated renames preserve the first original title and creation timestamp.
+- Closing a tab removes its record.
+- A Chrome tab replacement migrates the record to the new tab ID. If the
+  destination already has a record, that destination record wins.
+- Worker startup reconciles records against the current tab list and removes
+  stale entries.
+- Malformed records already present in storage are ignored on reads.
+
+The write queue is an in-memory coordination mechanism, not the source of
+truth. Data remains in `chrome.storage.session`, so service-worker suspension
+does not erase it. The queue serializes mutations within the single
+service-worker instance; it is not a distributed lock across independent
+extension contexts.
+
+## Tab service
+
+`TabService` wraps `chrome.tabs.query` and `chrome.tabs.get`. Returned tabs
+are enriched with `customTitle`, which is either the saved name or `null`.
+The URL is never used as an identity key.
+
+The lifecycle adapter registers:
+- `tabs.onRemoved`: remove the closed tab's record.
+- `tabs.onReplaced`: migrate the old tab's record to the replacement ID.
+
+Listeners are registered once by the service-worker entry point. Asynchronous
+cleanup failures are logged and do not escape the Chrome event callback.
 
 ## Permissions and access model
 
@@ -99,7 +133,8 @@ malformed messages must be ignored safely.
 ## Phase boundaries
 
 - EP1: manifest, runtime skeleton, shared contracts, and documentation.
-- EP2: storage and tab services.
+- EP2: storage and tab services, lifecycle cleanup, and stale-record
+  reconciliation.
 - EP3: title manager, observer, permission-aware injection, and navigation
   recovery.
 - EP4: tab context menu actions.
