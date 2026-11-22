@@ -1,0 +1,14 @@
+{
+  "name": "tabrenamer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A Chrome extension for assigning custom names to individual tabs.",
+  "scripts": {
+    "test": "node --test",
+    "check:manifest": "node --input-type=module -e \"import fs from 'node:fs'; JSON.parse(fs.readFileSync('manifest.json', 'utf8')); console.log('manifest valid');\""
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
