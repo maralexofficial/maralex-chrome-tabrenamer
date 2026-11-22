@@ -113,11 +113,20 @@ export class TitleService {
         return { ok: false, reason: "The page did not accept the custom title." };
       }
 
-      await this.#storage.setTabName(
-        tab.id,
-        validated.value,
-        typeof tab.title === "string" ? tab.title : "",
-      );
+      try {
+        await this.#storage.setTabName(
+          tab.id,
+          validated.value,
+          typeof tab.title === "string" ? tab.title : "",
+        );
+      } catch (storageError) {
+        // Avoid leaving a visible custom title without its durable session record.
+        await this.#tabs.sendMessage(tab.id, {
+          type: MESSAGE_TYPES.RESTORE_TITLE,
+          payload: { originalTitle: typeof tab.title === "string" ? tab.title : "" },
+        }).catch(() => undefined);
+        throw storageError;
+      }
 
       return { ok: true };
     } catch (error) {
@@ -130,8 +139,8 @@ export class TitleService {
   }
 
   /**
-   * Restore the saved page title. Access is requested from the same user
-   * gesture as a rename so the action also works after permissions were revoked.
+   * Restore the saved page title. The popup requests permission from the
+   * user's click; the background worker verifies the grant before applying.
    *
    * @param {chrome.tabs.Tab} tab
    * @returns {Promise<{ok: boolean, reason?: string}>}
@@ -141,8 +150,6 @@ export class TitleService {
       return { ok: false, reason: "The selected tab is no longer available." };
     }
 
-    // The popup passes its already-loaded record so the permission request
-    // remains the first asynchronous operation after the user's click.
     const record = suppliedRecord ?? await this.#storage.get(tab.id);
     if (!record) {
       return { ok: false, reason: "This tab does not have a custom title." };
