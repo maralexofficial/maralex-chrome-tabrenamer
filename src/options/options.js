@@ -1,5 +1,5 @@
-import { MESSAGE_TYPES } from "../shared/constants.js";
 import { StorageService } from "../services/storage-service.js";
+import { TitleService } from "../services/title-service.js";
 
 const elements = {
   list: document.querySelector("#tab-list"),
@@ -9,6 +9,7 @@ const elements = {
   refresh: document.querySelector("#refresh"),
 };
 const storageService = new StorageService();
+const titleService = new TitleService({ storageService });
 const ownPageUrl = chrome.runtime.getURL("src/options/options.html");
 let refreshInProgress = false;
 let refreshRequested = false;
@@ -33,28 +34,16 @@ function getPageDetails(tab) {
 }
 
 async function sendTitleOperation(type, tabId, customTitle) {
-  const requestId = globalThis.crypto?.randomUUID?.() ?? String(Date.now()) + "-" + tabId;
-  const message = {
-    type,
-    payload: { tabId, ...(customTitle === undefined ? {} : { customTitle }) },
-  };
-  console.info("[TabRenamer] Sending title operation.", { requestId, message });
-
   try {
-    const response = await chrome.runtime.sendMessage(message);
-    console.info("[TabRenamer] Received title operation response.", { requestId, response });
-    if (response === undefined) {
-      return {
-        ok: false,
-        reason: "The service worker did not respond. Open the TabRenamer service worker console and retry.",
-      };
-    }
-    return response;
+    const tab = await chrome.tabs.get(tabId);
+    return type === "rename"
+      ? await titleService.renameTab(tab, customTitle)
+      : await titleService.restoreTab(tab);
   } catch (error) {
-    console.error("[TabRenamer] Background operation failed.", { requestId, error });
+    console.error("[TabRenamer] Tab management operation failed.", error);
     return {
       ok: false,
-      reason: error?.message || "The background service could not complete the request.",
+      reason: error?.message || "The title operation could not be completed.",
     };
   }
 }
@@ -127,7 +116,7 @@ function createTabCard(tab, record) {
     }
     input.disabled = save.disabled = restore.disabled = true;
     setStatus("Saving tab name…");
-    const result = await sendTitleOperation(MESSAGE_TYPES.RENAME_TAB, tab.id, customTitle);
+    const result = await sendTitleOperation("rename", tab.id, customTitle);
     if (result?.ok) {
       latestRecords[String(tab.id)] = { ...(latestRecords[String(tab.id)] ?? {}), customTitle };
       setStatus("Name saved for this tab.", "success");
@@ -143,7 +132,7 @@ function createTabCard(tab, record) {
   restore.addEventListener("click", async () => {
     input.disabled = save.disabled = restore.disabled = true;
     setStatus("Restoring original page title…");
-    const result = await sendTitleOperation(MESSAGE_TYPES.RESTORE_TAB, tab.id);
+    const result = await sendTitleOperation("restore", tab.id);
     if (result?.ok) {
       delete latestRecords[String(tab.id)];
       setStatus("Original title restored.", "success");
