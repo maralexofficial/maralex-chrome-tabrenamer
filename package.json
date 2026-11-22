@@ -6,7 +6,8 @@
   "description": "A Chrome extension for assigning custom names to individual tabs.",
   "scripts": {
     "test": "node --test",
-    "check:manifest": "node --input-type=module -e \"import fs from 'node:fs'; JSON.parse(fs.readFileSync('manifest.json', 'utf8')); console.log('manifest valid');\""
+    "check:manifest": "node --input-type=module -e \"import fs from 'node:fs'; JSON.parse(fs.readFileSync('manifest.json', 'utf8')); console.log('manifest valid');\"",
+    "check:syntax": "find src tests -type f -name '*.js' -print0 | xargs -0 -r -n1 node --check"
   },
   "engines": {
     "node": ">=20"
