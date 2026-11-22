@@ -11,6 +11,9 @@ name to each open browser tab.
 - **EP4 — Separate rename page and context-menu workflow:** removed.
 - **EP5 — Popup and dedicated tab manager:** implemented; automated tests included.
 - **EP6 — Per-tab preset colors:** implemented; eight colors available in the popup and tab manager.
+- **EP7 — Error handling and lifecycle hardening:** complete.
+- **EP8 — Verification:** complete; 63 automated tests pass and all eight manual Chrome checks were confirmed successful.
+- **EP9 — Release documentation and packaging:** prepared; package creation and ZIP validation are automated. Store publication remains manual.
 
 The extension popup shows only the active tab and provides a direct rename and
 restore action. The **Manage all tabs** action opens the dedicated TabRenamer
@@ -48,5 +51,5 @@ Validate the manifest:
 npm run check:manifest
 ```
 
-See [Development](docs/Development.md) and
-[Architecture](docs/Architecture.md) for more information.
+See [Development](docs/Development.md), [Architecture](docs/Architecture.md), and
+[Release](docs/Release.md) for more information.

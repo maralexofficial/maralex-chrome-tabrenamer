@@ -56,13 +56,14 @@ restore acknowledgement failures, and rollback of a visible title after a failed
 storage write. Runtime-message integration tests exercise the extension-page trust boundary,
 request validation, tab lookup, rename/restore routing, and tab-disappearance
 errors. The current CI run passes 63 tests, plus JavaScript syntax and manifest
-validation.
+validation. The user has also confirmed that all eight manual Chrome checks
+listed below passed on the tested extension build.
 
 ### Manual Chrome verification
 
 Automated tests cannot prove that Chrome itself applies document titles and
-renders the extension UI correctly. Before release, load the unpacked extension
-in Chrome and verify:
+renders the extension UI correctly. The user confirmed all eight checks passed
+for the current tested build:
 
 1. Rename the active tab from the popup; confirm the browser tab title changes.
 2. Rename a different tab from Manage all tabs; confirm only that tab changes.
@@ -72,6 +73,8 @@ in Chrome and verify:
 6. Try a Chrome-internal page such as `chrome://settings`; confirm the UI reports it as unsupported.
 7. Close a renamed tab and reopen the manager; confirm the closed tab is absent.
 8. Suspend/restart the service worker (for example, via the extension service-worker DevTools) and confirm saved names and colors remain for the current browser session.
+
+For future release candidates, repeat these checks against the exact candidate commit.
 
 ## Title management and site access
 

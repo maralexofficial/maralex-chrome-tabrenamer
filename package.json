@@ -7,7 +7,9 @@
   "scripts": {
     "test": "node --test",
     "check:manifest": "node --input-type=module -e \"import fs from 'node:fs'; JSON.parse(fs.readFileSync('manifest.json', 'utf8')); console.log('manifest valid');\"",
-    "check:syntax": "find src tests -type f -name '*.js' -print0 | xargs -0 -r -n1 node --check"
+    "check:syntax": "find src tests -type f -name '*.js' -print0 | xargs -0 -r -n1 node --check",
+    "package": "bash scripts/package-extension.sh",
+    "check:package": "npm run package && unzip -l dist/tabrenamer-v*.zip"
   },
   "engines": {
     "node": ">=20"

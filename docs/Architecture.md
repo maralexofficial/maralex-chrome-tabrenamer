@@ -119,8 +119,8 @@ options page opened in a browser tab while rejecting website content scripts.
 - EP5: compact active-tab popup and dedicated searchable tab manager (implemented).
 - EP6: per-tab preset colors in popup and tab manager (implemented).
 - EP7: permission failures, restricted pages, storage failures, and tab-lifecycle hardening (implemented).
-- EP8: unit and runtime-message integration verification implemented; real Chrome interaction checklist prepared.
-- EP9: release documentation and packaging.
+- EP8: complete — 63 automated tests pass; all eight manual Chrome checks were confirmed successful by the user.
+- EP9: release guide and automated ZIP packaging prepared; CI validates and uploads the package as a workflow artifact. Chrome Web Store publication remains a manual release action.
 
 ## Quality requirements
 
