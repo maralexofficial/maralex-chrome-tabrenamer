@@ -33,23 +33,7 @@ function getOriginPattern(rawUrl) {
   }
 }
 
-/**
- * Request permission synchronously from this popup click handler, then ask
- * the service worker to perform the actual operation and storage mutation.
- */
-async function requestSiteAccessAndSend(message, originPattern) {
-  let granted = false;
-  try {
-    granted = await chrome.permissions.request({ origins: [originPattern] });
-  } catch (error) {
-    console.error("[TabRenamer] Site permission request failed.", error);
-    return { ok: false, reason: "Could not request access to this website." };
-  }
-
-  if (!granted) {
-    return { ok: false, reason: "Website access was not granted." };
-  }
-
+async function sendTitleOperation(message) {
   try {
     return await chrome.runtime.sendMessage(message);
   } catch (error) {
@@ -101,15 +85,15 @@ elements.form.addEventListener("submit", async (event) => {
   if (!activeTab?.isSupported) return;
 
   setBusy(true);
-  setStatus("Requesting access and applying the custom title…");
+  setStatus("Applying the custom title…");
 
-  const result = await requestSiteAccessAndSend({
+  const result = await sendTitleOperation({
     type: MESSAGE_TYPES.RENAME_TAB,
     payload: {
       tabId: activeTab.id,
       customTitle: elements.input.value,
     },
-  }, activeTab.originPattern);
+  });
 
   if (result?.ok) {
     activeTab.hasCustomTitle = true;
@@ -128,10 +112,10 @@ elements.restore.addEventListener("click", async () => {
   setBusy(true);
   setStatus("Restoring the page title…");
 
-  const result = await requestSiteAccessAndSend({
+  const result = await sendTitleOperation({
     type: MESSAGE_TYPES.RESTORE_TAB,
     payload: { tabId: activeTab.id },
-  }, activeTab.originPattern);
+  });
 
   if (result?.ok) {
     activeTab.hasCustomTitle = false;
