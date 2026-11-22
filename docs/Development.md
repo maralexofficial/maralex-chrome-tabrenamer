@@ -12,10 +12,9 @@
 3. Select **Load unpacked**.
 4. Choose the repository root directory.
 
-The current EP3 build includes the title controller, one-time broad HTTP/HTTPS
-website permission, dynamic content-script registration, navigation recovery,
-and a minimal popup for renaming/restoring the active tab. Full multi-tab
-listing and management remain in EP5.
+The current build includes EP3 title management and EP4 tab context menus.
+The context menu can open a focused rename page for the clicked tab or restore
+its original page title. Full multi-tab listing and management remain in EP5.
 
 ## Project layout
 
