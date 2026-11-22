@@ -117,7 +117,7 @@ options page opened in a browser tab while rejecting website content scripts.
 - EP4: experimental separate rename page/context-menu workflow (removed).
 - EP5: compact active-tab popup and dedicated searchable tab manager (implemented).
 - EP6: per-tab preset colors in popup and tab manager (implemented).
-- EP7: permission failures, restricted pages, and lifecycle hardening.
+- EP7: permission failures, restricted pages, storage failures, and tab-lifecycle hardening (implemented).
 - EP8: unit, integration, and browser verification.
 - EP9: release documentation and packaging.
 
@@ -127,4 +127,5 @@ options page opened in a browser tab while rejecting website content scripts.
 - Do not use URL as the identity key for an individual tab.
 - Treat page titles and user-entered titles as untrusted strings.
 - Do not claim title modification succeeded until the script reports success.
+- Treat permission API, storage, injection, and disappearing-tab failures as recoverable operation failures.
 - Keep the service worker restart-safe and event-driven.

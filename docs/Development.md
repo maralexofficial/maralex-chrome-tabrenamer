@@ -50,8 +50,10 @@ The tests use Node's built-in test runner and in-memory Chrome API test
 doubles. They cover storage validation, independent tab records, concurrent
 mutations, tab-ID migration, stale-record cleanup, tab lookup, lifecycle
 listeners, scoped script registration, content-controller behavior, title
-restoration, navigation recovery, and trusted extension-page messaging. A
-real Chrome interaction test is required to verify popup rendering, options
+restoration, navigation recovery, and trusted extension-page messaging. They also cover permission-check rejection,
+restricted URLs, missing tabs during navigation, storage read/write failures,
+restore acknowledgement failures, and rollback of a visible title after a failed
+storage write. A real Chrome interaction test is required to verify popup rendering, options
 page navigation, browser event refresh behavior, and actual website permissions.
 
 ## Title management and site access
