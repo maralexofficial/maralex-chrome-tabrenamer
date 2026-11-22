@@ -52,6 +52,7 @@ content script keeps page scripts from replacing the custom title.
 - `tab-service.js`: Chrome Tabs API facade, custom-title enrichment, and
   lifecycle event registration.
 - `title-service.js`: website permission verification, scoped dynamic content-script registration, title application/restoration, and navigation recovery.
+- `runtime-message-service.js`: trusted extension-page message boundary, request validation, tab lookup, and asynchronous operation responses.
 
 ## Data ownership and persistence
 
@@ -118,7 +119,7 @@ options page opened in a browser tab while rejecting website content scripts.
 - EP5: compact active-tab popup and dedicated searchable tab manager (implemented).
 - EP6: per-tab preset colors in popup and tab manager (implemented).
 - EP7: permission failures, restricted pages, storage failures, and tab-lifecycle hardening (implemented).
-- EP8: unit, integration, and browser verification.
+- EP8: unit and runtime-message integration verification implemented; real Chrome interaction checklist prepared.
 - EP9: release documentation and packaging.
 
 ## Quality requirements

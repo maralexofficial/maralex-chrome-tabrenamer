@@ -24,7 +24,7 @@ The manager excludes its own extension page from the tab list.
 
 - `src/background/`: service worker and browser event handlers.
 - `src/content/`: page title controller.
-- `src/services/`: tab, storage, and title services.
+- `src/services/`: tab, storage, title, and runtime-message services.
 - `src/popup/`: compact active-tab popup.
 - `src/options/`: full tab-management page.
 - `src/shared/`: constants, message contracts, and validation.
@@ -53,8 +53,25 @@ listeners, scoped script registration, content-controller behavior, title
 restoration, navigation recovery, and trusted extension-page messaging. They also cover permission-check rejection,
 restricted URLs, missing tabs during navigation, storage read/write failures,
 restore acknowledgement failures, and rollback of a visible title after a failed
-storage write. A real Chrome interaction test is required to verify popup rendering, options
-page navigation, browser event refresh behavior, and actual website permissions.
+storage write. Runtime-message integration tests exercise the extension-page trust boundary,
+request validation, tab lookup, rename/restore routing, and tab-disappearance
+errors. The current CI run passes 63 tests, plus JavaScript syntax and manifest
+validation.
+
+### Manual Chrome verification
+
+Automated tests cannot prove that Chrome itself applies document titles and
+renders the extension UI correctly. Before release, load the unpacked extension
+in Chrome and verify:
+
+1. Rename the active tab from the popup; confirm the browser tab title changes.
+2. Rename a different tab from Manage all tabs; confirm only that tab changes.
+3. Reload and navigate a renamed tab; confirm the custom title is reapplied.
+4. Restore a title; confirm the original page title returns without reloading.
+5. Assign and clear colors in the popup and manager; confirm the matching cards update.
+6. Try a Chrome-internal page such as `chrome://settings`; confirm the UI reports it as unsupported.
+7. Close a renamed tab and reopen the manager; confirm the closed tab is absent.
+8. Suspend/restart the service worker (for example, via the extension service-worker DevTools) and confirm saved names and colors remain for the current browser session.
 
 ## Title management and site access
 
