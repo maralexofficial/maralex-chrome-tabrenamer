@@ -153,3 +153,27 @@ test("continues accepting writes after a storage failure", async () => {
   await service.setTabName(2, "Second");
   assert.equal((await service.get(2)).customTitle, "Second");
 });
+
+test("updates the original title after a full navigation", async () => {
+  const { service } = createService();
+  await service.setTabName(44, "Custom name", "First page");
+
+  const updated = await service.updateOriginalTitle(44, "Second page");
+
+  assert.equal(updated.customTitle, "Custom name");
+  assert.equal(updated.originalTitle, "Second page");
+  assert.equal((await service.get(44)).originalTitle, "Second page");
+});
+
+test("does not create a record when updating an unknown tab title", async () => {
+  const { service } = createService();
+
+  assert.equal(await service.updateOriginalTitle(404, "Missing page"), null);
+  assert.equal(await service.get(404), null);
+});
+
+test("rejects invalid original title updates", async () => {
+  const { service } = createService();
+
+  await assert.rejects(service.updateOriginalTitle(1, null), TypeError);
+});
