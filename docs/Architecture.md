@@ -155,7 +155,7 @@ malformed messages must be ignored safely.
   reconciliation.
 - EP3: title manager, observer, permission-aware injection, and navigation
   recovery (implemented).
-- EP4: tab context menu actions.
+- EP4: tab context menu actions (implemented).
 - EP5: popup tab listing and editing.
 - EP6: permission failures, restricted pages, and lifecycle hardening.
 - EP7: unit, integration, and browser verification.
