@@ -57,8 +57,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     try {
       const tab = await chrome.tabs.get(payload.tabId);
       const result = message.type === MESSAGE_TYPES.RENAME_TAB
-        ? await titleService.renameTab(tab, payload.customTitle, { permissionGranted: true })
-        : await titleService.restoreTab(tab, undefined, { permissionGranted: true });
+        ? await titleService.renameTab(tab, payload.customTitle)
+        : await titleService.restoreTab(tab);
       sendResponse(result);
     } catch (error) {
       console.error("[" + EXTENSION_NAME + "] Title operation failed.", error);
