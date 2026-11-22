@@ -10,7 +10,7 @@ name to each open browser tab.
 - **EP3 — Title management:** implemented; automated tests included.
 - **EP4 — Separate rename page and context-menu workflow:** removed.
 - **EP5 — Popup and dedicated tab manager:** implemented; automated tests included.
-- **EP6–EP8:** planned.
+- **EP6 — Per-tab preset colors:** implemented; eight colors available in the popup and tab manager.
 
 The extension popup shows only the active tab and provides a direct rename and
 restore action. The **Manage all tabs** action opens the dedicated TabRenamer
