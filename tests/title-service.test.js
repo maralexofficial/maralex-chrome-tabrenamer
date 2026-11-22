@@ -17,6 +17,7 @@ function createTitleHarness({
   permissionError = null,
   tabAvailable = true,
   requestResult = true,
+  storageReadError = null,
   sendResponse = { ok: true },
 } = {}) {
   const calls = [];
@@ -68,7 +69,12 @@ function createTitleHarness({
     tabs,
     permissions,
     scripting,
-    storageService,
+    storageService: storageReadError ? {
+      get: async (...args) => { if (storageReadError) throw storageReadError; return storageService.get(...args); },
+      setTabName: (...args) => storageService.setTabName(...args),
+      remove: (...args) => storageService.remove(...args),
+      updateOriginalTitle: (...args) => storageService.updateOriginalTitle(...args),
+    } : storageService,
     logger: { warn() {}, error() {} },
   });
 
@@ -158,6 +164,45 @@ test("restores the saved title and removes its record", async () => {
   assert.equal(message.type, MESSAGE_TYPES.RESTORE_TITLE);
   assert.equal(message.payload.originalTitle, "Dashboard");
   assert.equal(await harness.storageService.get(7), null);
+});
+
+test("handles a failed saved-title read during restore without throwing", async () => {
+  const harness = createTitleHarness({ storageReadError: new Error("storage unavailable") });
+  const result = await harness.service.restoreTab(harness.tab);
+  assert.equal(result.ok, false);
+  assert.match(result.reason, /could not read/i);
+  assert.equal(harness.calls.some((call) => call.kind === "inject"), false);
+});
+
+test("keeps the saved record when the page rejects a restore operation", async () => {
+  const harness = createTitleHarness({ sendResponse: { ok: false } });
+  await harness.storageService.setTabName(7, "Custom", "Dashboard");
+  const result = await harness.service.restoreTab(harness.tab);
+  assert.equal(result.ok, false);
+  assert.equal((await harness.storageService.get(7)).customTitle, "Custom");
+});
+
+test("rolls back the visible title if persisting a rename fails", async () => {
+  const harness = createTitleHarness();
+  const failingStorage = {
+    get: (...args) => harness.storageService.get(...args),
+    setTabName: async () => { throw new Error("storage unavailable"); },
+    remove: (...args) => harness.storageService.remove(...args),
+    updateOriginalTitle: (...args) => harness.storageService.updateOriginalTitle(...args),
+  };
+  const service = new TitleService({
+    tabs: harness.tabs,
+    permissions: harness.permissions,
+    scripting: harness.scripting,
+    storageService: failingStorage,
+    logger: { warn() {}, error() {} },
+  });
+  const result = await service.renameTab(harness.tab, "Temporary custom title");
+  assert.equal(result.ok, false);
+  const messages = harness.calls.filter((call) => call.kind === "message");
+  assert.equal(messages.length, 2);
+  assert.equal(messages[0].message.type, MESSAGE_TYPES.APPLY_TITLE);
+  assert.equal(messages[1].message.type, MESSAGE_TYPES.RESTORE_TITLE);
 });
 
 test("reapplies a saved title after navigation and updates the restore title", async () => {

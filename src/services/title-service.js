@@ -129,7 +129,13 @@ export class TitleService {
       return { ok: false, reason: "The selected tab is no longer available." };
     }
 
-    const record = suppliedRecord ?? await this.#storage.get(tab.id);
+    let record;
+    try {
+      record = suppliedRecord ?? await this.#storage.get(tab.id);
+    } catch (error) {
+      this.#logger.warn("[TabRenamer] Could not read the saved title before restoring.", error);
+      return { ok: false, reason: "Could not read this tab's saved title." };
+    }
     if (!record) {
       return { ok: false, reason: "This tab does not have a custom title." };
     }
