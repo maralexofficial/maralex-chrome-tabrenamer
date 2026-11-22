@@ -133,12 +133,14 @@ export class TitleService {
    * @param {chrome.tabs.Tab} tab
    * @returns {Promise<{ok: boolean, reason?: string}>}
    */
-  async restoreTab(tab) {
+  async restoreTab(tab, suppliedRecord) {
     if (!Number.isInteger(tab?.id) || tab.id < 0) {
       return { ok: false, reason: "The selected tab is no longer available." };
     }
 
-    const record = await this.#storage.get(tab.id);
+    // The popup passes its already-loaded record so the permission request
+    // remains the first asynchronous operation after the user's click.
+    const record = suppliedRecord ?? await this.#storage.get(tab.id);
     if (!record) {
       return { ok: false, reason: "This tab does not have a custom title." };
     }
