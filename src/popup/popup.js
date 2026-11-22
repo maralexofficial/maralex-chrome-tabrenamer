@@ -1,5 +1,5 @@
+import { MESSAGE_TYPES } from "../shared/constants.js";
 import { StorageService } from "../services/storage-service.js";
-import { TitleService } from "../services/title-service.js";
 
 const elements = {
   pageName: document.querySelector("#page-name"),
@@ -11,7 +11,6 @@ const elements = {
 };
 
 const storageService = new StorageService();
-const titleService = new TitleService({ storageService });
 let activeTab = null;
 
 function setStatus(message, kind = "neutral") {
@@ -20,8 +19,43 @@ function setStatus(message, kind = "neutral") {
 }
 
 function setBusy(busy) {
-  elements.save.disabled = busy;
+  elements.save.disabled = busy || !activeTab?.isSupported;
   elements.restore.disabled = busy || !activeTab?.hasCustomTitle;
+}
+
+function getOriginPattern(rawUrl) {
+  try {
+    const url = new URL(rawUrl);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    return `${url.origin}/*`;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Request permission synchronously from this popup click handler, then ask
+ * the service worker to perform the actual operation and storage mutation.
+ */
+async function requestSiteAccessAndSend(message, originPattern) {
+  let granted = false;
+  try {
+    granted = await chrome.permissions.request({ origins: [originPattern] });
+  } catch (error) {
+    console.error("[TabRenamer] Site permission request failed.", error);
+    return { ok: false, reason: "Could not request access to this website." };
+  }
+
+  if (!granted) {
+    return { ok: false, reason: "Website access was not granted." };
+  }
+
+  try {
+    return await chrome.runtime.sendMessage(message);
+  } catch (error) {
+    console.error("[TabRenamer] Background operation failed.", error);
+    return { ok: false, reason: "The background service could not complete the request." };
+  }
 }
 
 async function initialize() {
@@ -44,19 +78,13 @@ async function initialize() {
     elements.pageName.textContent = hostname;
 
     const record = await storageService.get(activeTab.id);
-    activeTab.savedRecord = record;
     activeTab.hasCustomTitle = Boolean(record);
     elements.input.value = record?.customTitle ?? "";
     elements.restore.disabled = !record;
+    activeTab.originPattern = getOriginPattern(activeTab.url);
+    activeTab.isSupported = Boolean(activeTab.originPattern);
 
-    let isWebPage = false;
-    try {
-      const protocol = new URL(activeTab.url).protocol;
-      isWebPage = protocol === "http:" || protocol === "https:";
-    } catch {
-      isWebPage = false;
-    }
-    if (!isWebPage) {
+    if (!activeTab.isSupported) {
       elements.input.disabled = true;
       elements.save.disabled = true;
       setStatus("Chrome does not allow title changes on this page.", "error");
@@ -70,40 +98,48 @@ async function initialize() {
 
 elements.form.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (!activeTab) return;
+  if (!activeTab?.isSupported) return;
 
   setBusy(true);
   setStatus("Requesting access and applying the custom title…");
 
-  // renameTab starts chrome.permissions.request synchronously from this click.
-  const result = await titleService.renameTab(activeTab, elements.input.value);
-  if (result.ok) {
+  const result = await requestSiteAccessAndSend({
+    type: MESSAGE_TYPES.RENAME_TAB,
+    payload: {
+      tabId: activeTab.id,
+      customTitle: elements.input.value,
+    },
+  }, activeTab.originPattern);
+
+  if (result?.ok) {
     activeTab.hasCustomTitle = true;
-    activeTab.savedRecord = await storageService.get(activeTab.id);
     elements.restore.disabled = false;
     setStatus("Custom tab name saved.", "success");
   } else {
-    setStatus(result.reason ?? "Could not rename this tab.", "error");
+    setStatus(result?.reason ?? "Could not rename this tab.", "error");
   }
 
   setBusy(false);
 });
 
 elements.restore.addEventListener("click", async () => {
-  if (!activeTab) return;
+  if (!activeTab?.isSupported || !activeTab.hasCustomTitle) return;
 
   setBusy(true);
   setStatus("Restoring the page title…");
 
-  const result = await titleService.restoreTab(activeTab, activeTab.savedRecord);
-  if (result.ok) {
+  const result = await requestSiteAccessAndSend({
+    type: MESSAGE_TYPES.RESTORE_TAB,
+    payload: { tabId: activeTab.id },
+  }, activeTab.originPattern);
+
+  if (result?.ok) {
     activeTab.hasCustomTitle = false;
-    activeTab.savedRecord = null;
     elements.input.value = "";
     elements.restore.disabled = true;
     setStatus("Original page title restored.", "success");
   } else {
-    setStatus(result.reason ?? "Could not restore this tab.", "error");
+    setStatus(result?.reason ?? "Could not restore this tab.", "error");
   }
 
   setBusy(false);
