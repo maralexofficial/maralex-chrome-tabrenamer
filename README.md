@@ -7,12 +7,15 @@ name to each open browser tab.
 
 - **EP1 — Project foundation:** complete.
 - **EP2 — Storage and tab services:** implemented; automated tests included.
-- **EP3–EP8:** planned.
+- **EP3 — Title management:** implemented; ready for the first Chrome test.
+- **EP4–EP8:** planned.
 
 The current build includes session-scoped per-tab storage, a Chrome Tabs API
 facade, tab-close cleanup, replacement-ID migration, and startup reconciliation.
-The actual title controller, context-menu actions, and full popup workflow are
-not implemented yet.
+The current build can rename and restore the active tab from the popup, asks
+for access only to the current website, and reapplies names after full page
+navigation. Multi-tab listing and context-menu actions are planned for later
+phases.
 
 ## Requirements
 
