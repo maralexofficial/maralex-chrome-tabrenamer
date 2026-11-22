@@ -66,7 +66,7 @@ export class TitleService {
    * @param {string} customTitle
    * @returns {Promise<{ok: boolean, reason?: string}>}
    */
-  async renameTab(tab, customTitle) {
+  async renameTab(tab, customTitle, { permissionGranted = false } = {}) {
     if (!Number.isInteger(tab?.id) || tab.id < 0) {
       return { ok: false, reason: "The selected tab is no longer available." };
     }
@@ -81,16 +81,19 @@ export class TitleService {
       return { ok: false, reason: "This page does not allow title management." };
     }
 
-    let permissionGranted;
+    let hasAccess = permissionGranted;
     try {
-      // Do not insert an await before this request: Chrome requires a user gesture.
-      permissionGranted = await this.#permissions.request({ origins: [originPattern] });
+      // The popup requests permission in its click handler. The worker verifies
+      // that grant before performing the storage mutation.
+      hasAccess = permissionGranted
+        ? await this.#permissions.contains({ origins: [originPattern] })
+        : await this.#permissions.request({ origins: [originPattern] });
     } catch (error) {
-      this.#logger.warn("[TabRenamer] Site permission request failed.", error);
-      return { ok: false, reason: "Could not request access to this website." };
+      this.#logger.warn("[TabRenamer] Site permission check failed.", error);
+      return { ok: false, reason: "Could not verify access to this website." };
     }
 
-    if (!permissionGranted) {
+    if (!hasAccess) {
       return { ok: false, reason: "Website access was not granted." };
     }
 
@@ -133,7 +136,7 @@ export class TitleService {
    * @param {chrome.tabs.Tab} tab
    * @returns {Promise<{ok: boolean, reason?: string}>}
    */
-  async restoreTab(tab, suppliedRecord) {
+  async restoreTab(tab, suppliedRecord, { permissionGranted = false } = {}) {
     if (!Number.isInteger(tab?.id) || tab.id < 0) {
       return { ok: false, reason: "The selected tab is no longer available." };
     }
@@ -150,15 +153,17 @@ export class TitleService {
       return { ok: false, reason: "This page does not allow title management." };
     }
 
-    let permissionGranted;
+    let hasAccess = permissionGranted;
     try {
-      permissionGranted = await this.#permissions.request({ origins: [originPattern] });
+      hasAccess = permissionGranted
+        ? await this.#permissions.contains({ origins: [originPattern] })
+        : await this.#permissions.request({ origins: [originPattern] });
     } catch (error) {
-      this.#logger.warn("[TabRenamer] Site permission request failed.", error);
-      return { ok: false, reason: "Could not request access to this website." };
+      this.#logger.warn("[TabRenamer] Site permission check failed.", error);
+      return { ok: false, reason: "Could not verify access to this website." };
     }
 
-    if (!permissionGranted) {
+    if (!hasAccess) {
       return { ok: false, reason: "Website access was not granted." };
     }
 
