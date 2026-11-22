@@ -72,16 +72,17 @@ function createTitleHarness({
   return { service, storageService, tabs, permissions, scripting, calls, tab, registered };
 }
 
-test("requests only the active tab origin and registers a scoped document-start script", async () => {
+test("checks the one-time website grant and registers a scoped document-start script", async () => {
   const harness = createTitleHarness();
 
   const result = await harness.service.renameTab(harness.tab, "  Project Alpha  ");
 
   assert.deepEqual(result, { ok: true });
   assert.deepEqual(harness.calls[0], {
-    kind: "request",
+    kind: "contains",
     details: { origins: ["https://example.com/*"] },
   });
+  assert.equal(harness.calls.some((call) => call.kind === "request"), false);
   const registration = harness.calls.find((call) => call.kind === "register");
   assert.equal(registration.definitions[0].matches[0], "https://example.com/*");
   assert.equal(registration.definitions[0].runAt, "document_start");
@@ -94,8 +95,8 @@ test("requests only the active tab origin and registers a scoped document-start 
   assert.equal((await harness.storageService.get(7)).customTitle, "Project Alpha");
 });
 
-test("does not store a title when site permission is denied", async () => {
-  const harness = createTitleHarness({ requestResult: false });
+test("does not store a title when the one-time website permission is unavailable", async () => {
+  const harness = createTitleHarness({ permissionGranted: false });
 
   const result = await harness.service.renameTab(harness.tab, "Private");
 
@@ -262,23 +263,19 @@ test("content controller installation is idempotent in one document", () => {
 test("background operation verifies a popup-granted permission without requesting again", async () => {
   const harness = createTitleHarness();
 
-  const result = await harness.service.renameTab(harness.tab, "Granted in popup", {
-    permissionGranted: true,
-  });
+  const result = await harness.service.renameTab(harness.tab, "No prompt needed");
 
   assert.equal(result.ok, true);
   assert.equal(harness.calls.some((call) => call.kind === "request"), false);
   assert.ok(harness.calls.some((call) => call.kind === "contains"));
-  assert.equal((await harness.storageService.get(7)).customTitle, "Granted in popup");
+  assert.equal((await harness.storageService.get(7)).customTitle, "No prompt needed");
 });
 
 test("background restore verifies the existing permission before restoring", async () => {
   const harness = createTitleHarness();
   await harness.storageService.setTabName(7, "Custom", "Dashboard");
 
-  const result = await harness.service.restoreTab(harness.tab, undefined, {
-    permissionGranted: true,
-  });
+  const result = await harness.service.restoreTab(harness.tab);
 
   assert.equal(result.ok, true);
   assert.equal(harness.calls.some((call) => call.kind === "request"), false);
