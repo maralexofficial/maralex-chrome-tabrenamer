@@ -54,9 +54,11 @@ behavior and actual website permissions.
 
 The popup requests optional access only for the active HTTP(S) origin when a
 user saves or restores a title. Do not move `chrome.permissions.request()` out
-of the direct popup click flow: Chrome requires a user gesture. The service
-registers a document-start content script for that exact origin, then applies
-the title in the page's isolated world. The observer re-applies the custom
+of the direct popup click flow: Chrome requires a user gesture. After the grant,
+the popup sends a validated request to the service worker. The worker verifies
+the permission, registers a document-start content script for that exact
+origin, applies the title in the page's isolated world, and owns the storage
+mutation. The popup does not write tab records directly. The observer re-applies the custom
 title if the site changes `document.title`. On full navigation, the background
 worker reapplies the saved name after the tab finishes loading and updates
 the original title used by Restore.
