@@ -15,8 +15,10 @@
 Clicking the TabRenamer toolbar icon opens a compact popup for the active tab
 only. Select **Manage all tabs** to open the dedicated management page. This
 page lists tabs in the current window, supports search by tab title or website,
-and provides independent Save/Restore actions. The manager excludes its own
-extension page from the tab list.
+and provides independent Save/Restore actions. Both the popup and manager
+offer eight preset colors per tab plus a clear-color option. Colors are shown
+as a subtle colored card accent and are stored independently from custom names.
+The manager excludes its own extension page from the tab list.
 
 ## Project layout
 
