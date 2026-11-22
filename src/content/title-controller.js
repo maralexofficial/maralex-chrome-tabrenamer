@@ -1,5 +1,3 @@
-import { MESSAGE_TYPES } from "../shared/constants.js";
-
 (() => {
   const controllerKey = "__tabRenamerTitleController__";
 
@@ -74,13 +72,13 @@ import { MESSAGE_TYPES } from "../shared/constants.js";
       return false;
     }
 
-    if (message.type === MESSAGE_TYPES.APPLY_TITLE) {
+    if (message.type === "TABRENAMER/APPLY_TITLE") {
       const ok = applyCustomTitle(message.payload?.customTitle, message.payload?.originalTitle);
       sendResponse({ ok });
       return false;
     }
 
-    if (message.type === MESSAGE_TYPES.RESTORE_TITLE) {
+    if (message.type === "TABRENAMER/RESTORE_TITLE") {
       const ok = restoreOriginalTitle(message.payload?.originalTitle);
       sendResponse({ ok });
       return false;
