@@ -3,10 +3,13 @@ import assert from "node:assert/strict";
 
 import { MESSAGE_TYPES, EXTENSION_NAME } from "../src/shared/constants.js";
 import { registerRuntimeMessageHandler } from "../src/services/runtime-message-service.js";
-import { createEvent } from "./helpers/mock-chrome.js";
-
 function createHarness({ tab = { id: 17, url: "https://example.com", title: "Example" }, getError = null } = {}) {
-  const onMessage = createEvent();
+  let registeredListener = null;
+  const onMessage = {
+    addListener(listener) { registeredListener = listener; },
+    removeListener(listener) { if (registeredListener === listener) registeredListener = null; },
+    get listenerCount() { return registeredListener ? 1 : 0; },
+  };
   const runtime = { id: "tabrenamer-test-id", onMessage };
   const calls = [];
   const tabsApi = {
@@ -37,15 +40,11 @@ function createHarness({ tab = { id: 17, url: "https://example.com", title: "Exa
   async function send(message, sender = trustedSender) {
     let keepChannelOpen = false;
     const response = await new Promise((resolve) => {
-      keepChannelOpen = [...onMessageListeners(onMessage)][0](message, sender, resolve);
+      keepChannelOpen = registeredListener(message, sender, resolve);
     });
     return { response, keepChannelOpen };
   }
   return { calls, onMessage, trustedSender, unregister, send };
-}
-
-function onMessageListeners(event) {
-  return event.listeners ?? [];
 }
 
 test("runtime integration routes a trusted rename request through tab lookup to TitleService", async () => {
