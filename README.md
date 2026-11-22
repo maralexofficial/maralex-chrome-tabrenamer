@@ -12,8 +12,7 @@ name to each open browser tab.
 
 The current build includes session-scoped per-tab storage, a Chrome Tabs API
 facade, tab-close cleanup, replacement-ID migration, and startup reconciliation.
-The current build can rename and restore the active tab from the popup, asks
-for access only to the current website, and reapplies names after full page
+The current build can rename and restore the active tab from the popup, uses a one-time broad HTTP/HTTPS website permission, and reapplies names after full page
 navigation. Multi-tab listing and context-menu actions are planned for later
 phases.
 
