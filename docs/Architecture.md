@@ -121,11 +121,10 @@ The initial manifest requests only:
 - `contextMenus`: provide tab context-menu actions.
 - `scripting`: inject the title controller when permitted.
 
-No broad `host_permissions` are requested. The manifest declares HTTP and HTTPS
-origins as optional host permissions. When the user saves or restores a title,
-the popup requests only the active tab origin (for example,
-`https://example.com/*`). The permission request is initiated directly from
-the click handler, as required by Chrome. Chrome-internal pages, extension
+No broad `host_permissions` are requested. The manifest declares HTTP and HTTPS origins as required host permissions.
+Chrome displays the broad website-access warning once when the user installs
+or updates the extension to this permission model. Saving or restoring a title
+does not trigger additional per-site permission prompts. Chrome-internal pages, extension
 pages, and other restricted origins cannot be modified.
 
 ## Message protocol
