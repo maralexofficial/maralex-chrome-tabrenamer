@@ -24,7 +24,7 @@ export class TitleService {
     if (!tabs?.sendMessage || !tabs?.get) {
       throw new TypeError("A compatible Chrome Tabs API is required.");
     }
-    if (!permissions?.request || !permissions?.contains) {
+    if (!permissions?.contains) {
       throw new TypeError("A compatible Chrome Permissions API is required.");
     }
     if (!scripting?.executeScript || !scripting?.registerContentScripts) {
@@ -42,31 +42,13 @@ export class TitleService {
   }
 
   /**
-   * Request access to the active tab's origin. This method must be invoked
-   * directly from an extension-page user gesture (for example, a popup click).
-   *
-   * @param {chrome.tabs.Tab} tab
-   * @returns {Promise<boolean>}
-   */
-  requestSiteAccess(tab) {
-    const originPattern = this.#getOriginPattern(tab?.url);
-
-    if (!originPattern) {
-      return Promise.resolve(false);
-    }
-
-    // Keep this API call synchronous with the caller's click gesture.
-    return this.#permissions.request({ origins: [originPattern] });
-  }
-
-  /**
    * Apply a custom title to a tab after requesting its site permission.
    *
    * @param {chrome.tabs.Tab} tab
    * @param {string} customTitle
    * @returns {Promise<{ok: boolean, reason?: string}>}
    */
-  async renameTab(tab, customTitle, { permissionGranted = false } = {}) {
+  async renameTab(tab, customTitle) {
     if (!Number.isInteger(tab?.id) || tab.id < 0) {
       return { ok: false, reason: "The selected tab is no longer available." };
     }
@@ -81,13 +63,11 @@ export class TitleService {
       return { ok: false, reason: "This page does not allow title management." };
     }
 
-    let hasAccess = permissionGranted;
+    let hasAccess = false;
     try {
-      // The popup requests permission in its click handler. The worker verifies
-      // that grant before performing the storage mutation.
-      hasAccess = permissionGranted
-        ? await this.#permissions.contains({ origins: [originPattern] })
-        : await this.#permissions.request({ origins: [originPattern] });
+      // Website access is granted once through required host_permissions.
+      // The worker only verifies that Chrome still exposes that permission.
+      hasAccess = await this.#permissions.contains({ origins: [originPattern] });
     } catch (error) {
       this.#logger.warn("[TabRenamer] Site permission check failed.", error);
       return { ok: false, reason: "Could not verify access to this website." };
@@ -145,7 +125,7 @@ export class TitleService {
    * @param {chrome.tabs.Tab} tab
    * @returns {Promise<{ok: boolean, reason?: string}>}
    */
-  async restoreTab(tab, suppliedRecord, { permissionGranted = false } = {}) {
+  async restoreTab(tab, suppliedRecord) {
     if (!Number.isInteger(tab?.id) || tab.id < 0) {
       return { ok: false, reason: "The selected tab is no longer available." };
     }
@@ -160,11 +140,11 @@ export class TitleService {
       return { ok: false, reason: "This page does not allow title management." };
     }
 
-    let hasAccess = permissionGranted;
+    let hasAccess = false;
     try {
-      hasAccess = permissionGranted
-        ? await this.#permissions.contains({ origins: [originPattern] })
-        : await this.#permissions.request({ origins: [originPattern] });
+      // Website access is granted once through required host_permissions.
+      // The worker only verifies that Chrome still exposes that permission.
+      hasAccess = await this.#permissions.contains({ origins: [originPattern] });
     } catch (error) {
       this.#logger.warn("[TabRenamer] Site permission check failed.", error);
       return { ok: false, reason: "Could not verify access to this website." };
