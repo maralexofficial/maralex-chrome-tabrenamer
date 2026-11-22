@@ -82,7 +82,7 @@ export class StorageService {
       const timestamp = this.#now();
       const record = {
         customTitle: validated.value,
-        originalTitle: originalTitle ?? previous?.originalTitle ?? "",
+        originalTitle: previous?.originalTitle ?? originalTitle ?? "",
         createdAt: previous?.createdAt ?? timestamp,
         updatedAt: timestamp,
       };
