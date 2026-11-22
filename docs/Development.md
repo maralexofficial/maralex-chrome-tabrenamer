@@ -12,9 +12,10 @@
 3. Select **Load unpacked**.
 4. Choose the repository root directory.
 
-The current EP2 build provides the storage and tab-management foundation.
-Custom title application and the interactive popup are implemented in later
-phases.
+The current EP3 build includes the title controller, per-origin optional
+permission flow, dynamic content-script registration, navigation recovery,
+and a minimal popup for renaming/restoring the active tab. Full multi-tab
+listing and management remain in EP5.
 
 ## Project layout
 
@@ -43,9 +44,26 @@ npm run check:manifest
 
 The tests use Node's built-in test runner and in-memory Chrome API test
 doubles. They cover storage validation, independent tab records, concurrent
-mutations, tab-ID migration, stale-record cleanup, tab lookup, and lifecycle
-listeners. A real Chrome load-and-interaction test remains part of browser
-verification.
+mutations, tab-ID migration, stale-record cleanup, tab lookup, lifecycle
+listeners, optional permission decisions, scoped script registration,
+content-controller behavior, title restoration, and navigation recovery. A
+real Chrome load-and-interaction test is still required to verify browser API
+behavior and actual website permissions.
+
+## Title management and site access
+
+The popup requests optional access only for the active HTTP(S) origin when a
+user saves or restores a title. Do not move `chrome.permissions.request()` out
+of the direct popup click flow: Chrome requires a user gesture. The service
+registers a document-start content script for that exact origin, then applies
+the title in the page's isolated world. The observer re-applies the custom
+title if the site changes `document.title`. On full navigation, the background
+worker reapplies the saved name after the tab finishes loading and updates
+the original title used by Restore.
+
+Chrome-internal pages and non-HTTP(S) URLs are unsupported. The user must
+explicitly grant each site origin; the extension does not request broad host
+access at install time.
 
 ## Storage behavior
 
