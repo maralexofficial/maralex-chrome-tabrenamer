@@ -12,8 +12,8 @@
 3. Select **Load unpacked**.
 4. Choose the repository root directory.
 
-The current EP3 build includes the title controller, per-origin optional
-permission flow, dynamic content-script registration, navigation recovery,
+The current EP3 build includes the title controller, one-time broad HTTP/HTTPS
+website permission, dynamic content-script registration, navigation recovery,
 and a minimal popup for renaming/restoring the active tab. Full multi-tab
 listing and management remain in EP5.
 
