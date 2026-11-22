@@ -56,7 +56,7 @@ test("preserves original title and creation timestamp when renaming again", asyn
   const { service } = createService();
 
   const first = await service.setTabName(5, "First name", "Page title");
-  const second = await service.setTabName(5, "Second name");
+  const second = await service.setTabName(5, "Second name", "First name");
 
   assert.equal(second.originalTitle, "Page title");
   assert.equal(second.createdAt, first.createdAt);
