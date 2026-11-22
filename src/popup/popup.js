@@ -2,14 +2,15 @@ import { MESSAGE_TYPES } from "../shared/constants.js";
 import { StorageService } from "../services/storage-service.js";
 
 const elements = {
-  list: document.querySelector("#tab-list"),
-  count: document.querySelector("#tab-count"),
+  activeTab: document.querySelector("#active-tab"),
+  activeLabel: document.querySelector("#active-label"),
   status: document.querySelector("#status"),
+  manage: document.querySelector("#manage-tabs"),
 };
 
 const storageService = new StorageService();
-let refreshInProgress = false;
-let refreshRequested = false;
+let activeTabId = null;
+let currentRecord = null;
 
 function setStatus(message, kind = "neutral") {
   elements.status.textContent = message;
@@ -32,10 +33,7 @@ async function sendTitleOperation(type, tabId, customTitle) {
   try {
     return await chrome.runtime.sendMessage({
       type,
-      payload: {
-        tabId,
-        ...(customTitle === undefined ? {} : { customTitle }),
-      },
+      payload: { tabId, ...(customTitle === undefined ? {} : { customTitle }) },
     });
   } catch (error) {
     console.error("[TabRenamer] Background operation failed.", error);
@@ -43,54 +41,51 @@ async function sendTitleOperation(type, tabId, customTitle) {
   }
 }
 
-function createTabCard(tab, record) {
-  const card = document.createElement("article");
-  card.className = "tab-card";
-  if (tab.active) card.classList.add("tab-card--active");
+function renderActiveTab(tab) {
+  elements.activeTab.replaceChildren();
+  elements.activeLabel.hidden = !tab;
 
+  if (!tab) {
+    const empty = document.createElement("p");
+    empty.className = "active-tab__loading";
+    empty.textContent = "No active tab found.";
+    elements.activeTab.append(empty);
+    return;
+  }
+
+  activeTabId = tab.id;
+  const details = getPageDetails(tab);
   const heading = document.createElement("div");
-  heading.className = "tab-card__heading";
+  heading.className = "active-tab__heading";
 
   if (tab.favIconUrl) {
     const favicon = document.createElement("img");
-    favicon.className = "tab-card__favicon";
+    favicon.className = "active-tab__favicon";
     favicon.src = tab.favIconUrl;
     favicon.alt = "";
     favicon.addEventListener("error", () => favicon.remove(), { once: true });
     heading.append(favicon);
   }
 
-  const titleGroup = document.createElement("div");
-  titleGroup.className = "tab-card__title-group";
-
-  const title = document.createElement("p");
-  title.className = "tab-card__title";
-  title.textContent = record?.customTitle || tab.title || "Untitled tab";
-  titleGroup.append(title);
-
-  const details = document.createElement("p");
-  details.className = "tab-card__details";
-  details.textContent = getPageDetails(tab).hostname;
-  titleGroup.append(details);
-  heading.append(titleGroup);
-
-  if (tab.active) {
-    const active = document.createElement("span");
-    active.className = "tab-card__active";
-    active.textContent = "Active";
-    heading.append(active);
-  }
+  const text = document.createElement("div");
+  text.className = "active-tab__text";
+  const title = document.createElement("h2");
+  title.textContent = currentRecord?.customTitle || tab.title || "Untitled tab";
+  const host = document.createElement("p");
+  host.textContent = details.hostname;
+  text.append(title, host);
+  heading.append(text);
+  elements.activeTab.append(heading);
 
   const form = document.createElement("form");
-  form.className = "tab-card__form";
-
+  form.className = "active-tab__form";
   const input = document.createElement("input");
   input.type = "text";
   input.maxLength = 80;
-  input.value = record?.customTitle ?? "";
+  input.value = currentRecord?.customTitle ?? "";
   input.placeholder = "Enter a name for this tab";
   input.autocomplete = "off";
-  input.setAttribute("aria-label", "Custom name for " + (tab.title || "tab"));
+  input.setAttribute("aria-label", "Custom name for active tab");
 
   const save = document.createElement("button");
   save.type = "submit";
@@ -98,137 +93,94 @@ function createTabCard(tab, record) {
 
   const restore = document.createElement("button");
   restore.type = "button";
-  restore.className = "button button--secondary";
+  restore.className = "button--secondary";
   restore.textContent = "Restore";
-  restore.hidden = !record;
+  restore.hidden = !currentRecord;
 
-  const supported = getPageDetails(tab).supported && Number.isInteger(tab.id);
-  input.disabled = !supported;
-  save.disabled = !supported;
-  restore.disabled = !supported;
-
+  input.disabled = !details.supported;
+  save.disabled = !details.supported;
+  restore.disabled = !details.supported;
   form.append(input, save, restore);
+  elements.activeTab.append(form);
+
+  if (!details.supported) {
+    const note = document.createElement("p");
+    note.className = "active-tab__note";
+    note.textContent = "Chrome does not allow title changes on this page.";
+    elements.activeTab.append(note);
+  }
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (!supported) return;
-
     const customTitle = input.value.trim();
     if (!customTitle) {
       setStatus("Enter a name before saving.", "error");
       input.focus();
       return;
     }
-
-    input.disabled = true;
-    save.disabled = true;
-    restore.disabled = true;
+    input.disabled = save.disabled = restore.disabled = true;
     setStatus("Saving tab name…");
-
-    const result = await sendTitleOperation(MESSAGE_TYPES.RENAME_TAB, tab.id, customTitle);
+    const result = await sendTitleOperation(MESSAGE_TYPES.RENAME_TAB, activeTabId, customTitle);
     if (result?.ok) {
+      currentRecord = { ...(currentRecord ?? {}), customTitle };
+      title.textContent = customTitle;
+      restore.hidden = false;
       setStatus("Name saved for this tab.", "success");
-      await refreshTabs();
     } else {
       setStatus(result?.reason ?? "Could not rename this tab.", "error");
-      input.disabled = false;
-      save.disabled = false;
-      restore.disabled = !record;
     }
+    input.disabled = !details.supported;
+    save.disabled = !details.supported;
+    restore.disabled = !details.supported;
   });
 
   restore.addEventListener("click", async () => {
-    if (!supported || !record) return;
-
-    input.disabled = true;
-    save.disabled = true;
-    restore.disabled = true;
+    input.disabled = save.disabled = restore.disabled = true;
     setStatus("Restoring original page title…");
-
-    const result = await sendTitleOperation(MESSAGE_TYPES.RESTORE_TAB, tab.id);
+    const result = await sendTitleOperation(MESSAGE_TYPES.RESTORE_TAB, activeTabId);
     if (result?.ok) {
+      currentRecord = null;
+      input.value = "";
+      title.textContent = tab.title || "Untitled tab";
+      restore.hidden = true;
       setStatus("Original title restored.", "success");
-      await refreshTabs();
     } else {
       setStatus(result?.reason ?? "Could not restore this tab.", "error");
-      input.disabled = false;
-      save.disabled = false;
-      restore.disabled = false;
     }
+    input.disabled = !details.supported;
+    save.disabled = !details.supported;
+    restore.disabled = !details.supported || !currentRecord;
   });
-
-  card.append(heading, form);
-  if (!supported) {
-    const note = document.createElement("p");
-    note.className = "tab-card__note";
-    note.textContent = "Chrome does not allow title changes on this page.";
-    card.append(note);
-  }
-
-  return card;
 }
 
-async function refreshTabs() {
-  if (refreshInProgress) {
-    refreshRequested = true;
-    return;
-  }
-
-  refreshInProgress = true;
+async function loadActiveTab() {
   try {
-    const [tabs, records] = await Promise.all([
-      chrome.tabs.query({ currentWindow: true }),
-      storageService.getAll(),
+    const [tabs] = await Promise.all([
+      chrome.tabs.query({ active: true, currentWindow: true }),
     ]);
-
-    tabs.sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
-    if (elements.status.textContent === "Loading tabs…") {
-      setStatus("");
-    }
-    elements.count.textContent = String(tabs.length);
-    elements.list.replaceChildren();
-
-    if (tabs.length === 0) {
-      const empty = document.createElement("p");
-      empty.className = "tab-list__empty";
-      empty.textContent = "No open tabs in this window.";
-      elements.list.append(empty);
+    const tab = tabs[0];
+    if (!tab || !Number.isInteger(tab.id)) {
+      renderActiveTab(null);
       return;
     }
-
-    for (const tab of tabs) {
-      const record = records[String(tab.id)] ?? null;
-      elements.list.append(createTabCard(tab, record));
-    }
+    currentRecord = await storageService.get(tab.id);
+    renderActiveTab(tab);
   } catch (error) {
-    console.error("[TabRenamer] Could not load tabs.", error);
-    setStatus("Unable to load tabs. Reopen the popup and try again.", "error");
-    elements.list.replaceChildren();
-    const empty = document.createElement("p");
-    empty.className = "tab-list__empty";
-    empty.textContent = "Tabs could not be loaded.";
-    elements.list.append(empty);
-  } finally {
-    refreshInProgress = false;
-    if (refreshRequested) {
-      refreshRequested = false;
-      void refreshTabs();
-    }
+    console.error("[TabRenamer] Could not load active tab.", error);
+    setStatus("Unable to load the active tab.", "error");
+    renderActiveTab(null);
   }
 }
 
-function refreshUnlessEditing() {
-  if (document.activeElement instanceof HTMLInputElement) return;
-  void refreshTabs();
-}
-
-chrome.tabs.onCreated.addListener(refreshUnlessEditing);
-chrome.tabs.onRemoved.addListener(refreshUnlessEditing);
-chrome.tabs.onActivated.addListener(refreshUnlessEditing);
-chrome.tabs.onUpdated.addListener((_tabId, changeInfo) => {
-  if (changeInfo.title || changeInfo.url || changeInfo.status === "complete") {
-    refreshUnlessEditing();
+elements.manage.addEventListener("click", async () => {
+  elements.manage.disabled = true;
+  try {
+    await chrome.runtime.openOptionsPage();
+  } catch (error) {
+    console.error("[TabRenamer] Could not open tab manager.", error);
+    setStatus("Could not open tab management.", "error");
+    elements.manage.disabled = false;
   }
 });
 
-void refreshTabs();
+void loadActiveTab();

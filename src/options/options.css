@@ -1,0 +1,39 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+* { box-sizing: border-box; }
+body { margin: 0; color: CanvasText; background: Canvas; }
+.manager { width: min(100% - 40px, 1040px); margin: 0 auto; padding: 44px 0 32px; }
+.manager__header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 26px; }
+.manager__eyebrow { margin: 0 0 8px; color: #3b82f6; font-size: 11px; font-weight: 800; letter-spacing: .14em; }
+.manager__header h1 { margin: 0; font-size: clamp(26px, 4vw, 34px); line-height: 1.15; }
+.manager__description { max-width: 620px; margin: 9px 0 0; color: GrayText; font-size: 14px; line-height: 1.5; }
+.manager__count { min-width: 42px; padding: 8px 12px; text-align: center; font-size: 14px; font-weight: 700; border-radius: 999px; background: color-mix(in srgb, CanvasText 10%, Canvas); }
+.manager__toolbar { display: flex; gap: 10px; margin-bottom: 14px; }
+.search { display: flex; align-items: center; flex: 1; gap: 9px; min-height: 42px; padding: 0 12px; border: 1px solid color-mix(in srgb, CanvasText 20%, transparent); border-radius: 8px; }
+.search span { color: GrayText; font-size: 22px; }
+.search input { width: 100%; min-width: 0; border: 0; outline: 0; color: CanvasText; background: transparent; font: inherit; font-size: 13px; }
+button { min-height: 38px; padding: 8px 13px; color: white; background: #2563eb; border: 0; border-radius: 7px; font: inherit; font-size: 12px; font-weight: 650; cursor: pointer; }
+button:disabled, input:disabled { opacity: .5; cursor: not-allowed; }
+.button--secondary { color: CanvasText; background: color-mix(in srgb, CanvasText 10%, Canvas); border: 1px solid color-mix(in srgb, CanvasText 18%, transparent); }
+.manager__status { min-height: 18px; margin: 0 0 10px; color: GrayText; font-size: 12px; }
+.manager__status:empty { display: none; }
+.manager__status[data-kind="success"] { color: #16a34a; }
+.manager__status[data-kind="error"] { color: #dc2626; }
+.tab-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr)); gap: 12px; }
+.tab-card { display: grid; align-content: start; gap: 12px; min-width: 0; padding: 15px; border: 1px solid color-mix(in srgb, CanvasText 17%, transparent); border-radius: 10px; }
+.tab-card--active { border-color: #3b82f6; box-shadow: inset 3px 0 #3b82f6; }
+.tab-card__heading { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.tab-card__favicon { flex: 0 0 20px; width: 20px; height: 20px; object-fit: contain; }
+.tab-card__title-group { min-width: 0; flex: 1; }
+.tab-card__title { overflow: hidden; margin: 0; font-size: 13px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.tab-card__details, .tab-card__note { overflow: hidden; margin: 4px 0 0; color: GrayText; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.tab-card__active { flex: 0 0 auto; padding: 4px 7px; color: #2563eb; background: color-mix(in srgb, #3b82f6 13%, Canvas); border-radius: 5px; font-size: 10px; font-weight: 700; }
+.tab-card__form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 7px; }
+.tab-card__form input { width: 100%; min-width: 0; min-height: 38px; padding: 8px 10px; color: CanvasText; background: Canvas; border: 1px solid color-mix(in srgb, CanvasText 25%, transparent); border-radius: 7px; font: inherit; font-size: 12px; }
+.tab-list__empty { grid-column: 1 / -1; margin: 36px 0; color: GrayText; font-size: 13px; text-align: center; }
+.manager__footer { margin-top: 20px; color: GrayText; font-size: 11px; }
+@media (max-width: 520px) { .manager { width: min(100% - 24px, 1040px); padding-top: 26px; } .manager__header { align-items: flex-start; } .manager__toolbar { flex-direction: column; } }

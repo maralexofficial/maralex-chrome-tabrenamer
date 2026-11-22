@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>Tab management · TabRenamer</title>
+    <link rel="stylesheet" href="./options.css">
+    <script type="module" src="./options.js"></script>
+  </head>
+  <body>
+    <main class="manager">
+      <header class="manager__header">
+        <div>
+          <p class="manager__eyebrow">TABRENAMER</p>
+          <h1>Manage your tabs</h1>
+          <p class="manager__description">Give every open tab its own name. Changes apply independently to each tab.</p>
+        </div>
+        <span id="tab-count" class="manager__count">…</span>
+      </header>
+      <div class="manager__toolbar">
+        <label class="search">
+          <span aria-hidden="true">⌕</span>
+          <input id="search" type="search" placeholder="Search tabs or websites…" autocomplete="off">
+        </label>
+        <button id="refresh" class="button--secondary" type="button">Refresh</button>
+      </div>
+      <p id="status" class="manager__status" role="status" aria-live="polite">Loading tabs…</p>
+      <section id="tab-list" class="tab-list" aria-label="Open tabs">
+        <p class="tab-list__empty">Loading tabs…</p>
+      </section>
+      <footer class="manager__footer">Custom names are stored separately by tab for this browser session.</footer>
+    </main>
+  </body>
+</html>

@@ -13,18 +13,19 @@
       <header class="popup__header">
         <div>
           <h1>TabRenamer</h1>
-          <p>Manage the names of your open tabs.</p>
+          <p>Rename the active tab.</p>
         </div>
-        <span id="tab-count" class="popup__count">…</span>
+        <span id="active-label" class="popup__active" hidden>Active</span>
       </header>
-      <p id="status" class="popup__status" role="status" aria-live="polite">
-        Loading tabs…
-      </p>
-      <section id="tab-list" class="tab-list" aria-label="Open tabs">
-        <p class="tab-list__empty">Loading tabs…</p>
+      <section id="active-tab" class="active-tab" aria-live="polite">
+        <p class="active-tab__loading">Loading active tab…</p>
       </section>
+      <p id="status" class="popup__status" role="status" aria-live="polite"></p>
+      <button id="manage-tabs" class="manage-button" type="button">
+        Manage all tabs <span aria-hidden="true">↗</span>
+      </button>
       <footer class="popup__footer">
-        Names are stored separately for each tab during this browser session.
+        Custom names are stored for this browser session.
       </footer>
     </main>
   </body>

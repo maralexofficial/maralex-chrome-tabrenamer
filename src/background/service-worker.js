@@ -1,5 +1,5 @@
 import { EXTENSION_NAME, MESSAGE_TYPES } from "../shared/constants.js";
-import { isExtensionMessage } from "../shared/messages.js";
+import { isExtensionMessage, isTrustedExtensionPageSender } from "../shared/messages.js";
 import { StorageService } from "../services/storage-service.js";
 import { TabService, registerTabLifecycleListeners } from "../services/tab-service.js";
 import { TitleService, registerTitleNavigationListener } from "../services/title-service.js";
@@ -28,30 +28,22 @@ chrome.runtime.onInstalled.addListener((details) => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!isExtensionMessage(message)) return false;
-
   if (message.type === MESSAGE_TYPES.PING) {
     sendResponse({ ok: true, extension: EXTENSION_NAME });
     return false;
   }
-
-  // Only the extension popup may initiate title operations. Website content
-  // scripts have sender.tab set and are intentionally rejected.
-  if (sender.id !== chrome.runtime.id || sender.tab) return false;
+  if (!isTrustedExtensionPageSender(sender, chrome.runtime.id)) return false;
 
   const payload = message.payload;
   if (!payload || !Number.isInteger(payload.tabId) || payload.tabId < 0) {
     sendResponse({ ok: false, reason: "Invalid tab request." });
     return false;
   }
-
   if (message.type === MESSAGE_TYPES.RENAME_TAB && typeof payload.customTitle !== "string") {
     sendResponse({ ok: false, reason: "Invalid custom title." });
     return false;
   }
-
-  if (message.type !== MESSAGE_TYPES.RENAME_TAB && message.type !== MESSAGE_TYPES.RESTORE_TAB) {
-    return false;
-  }
+  if (message.type !== MESSAGE_TYPES.RENAME_TAB && message.type !== MESSAGE_TYPES.RESTORE_TAB) return false;
 
   void (async () => {
     try {
@@ -65,6 +57,5 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ ok: false, reason: "The title operation could not be completed." });
     }
   })();
-
   return true;
 });

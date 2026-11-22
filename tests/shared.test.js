@@ -1,17 +1,17 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { createMessage, isExtensionMessage } from "../src/shared/messages.js";
+import {
+  createMessage,
+  isExtensionMessage,
+  isTrustedExtensionPageSender,
+} from "../src/shared/messages.js";
 import { isValidTabId, validateCustomTitle } from "../src/shared/validators.js";
 import { MESSAGE_TYPES, TITLE_LIMITS } from "../src/shared/constants.js";
 
 test("createMessage builds a valid message envelope", () => {
   const message = createMessage(MESSAGE_TYPES.PING);
-
-  assert.deepEqual(message, {
-    type: MESSAGE_TYPES.PING,
-    payload: {},
-  });
+  assert.deepEqual(message, { type: MESSAGE_TYPES.PING, payload: {} });
   assert.equal(isExtensionMessage(message), true);
 });
 
@@ -31,11 +31,26 @@ test("isExtensionMessage rejects malformed and unknown messages", () => {
   assert.equal(isExtensionMessage({ type: MESSAGE_TYPES.PING, payload: [] }), false);
 });
 
+test("trusts extension options page opened in a tab", () => {
+  assert.equal(isTrustedExtensionPageSender({
+    id: "extension-id",
+    url: "chrome-extension://extension-id/src/options/options.html",
+    tab: { id: 42 },
+  }, "extension-id"), true);
+});
+
+test("rejects website content scripts and other extension IDs", () => {
+  assert.equal(isTrustedExtensionPageSender({
+    id: "extension-id", url: "https://example.com/page", tab: { id: 42 },
+  }, "extension-id"), false);
+  assert.equal(isTrustedExtensionPageSender({
+    id: "another-extension", url: "chrome-extension://another-extension/options.html",
+  }, "extension-id"), false);
+  assert.equal(isTrustedExtensionPageSender({ id: "extension-id" }, "extension-id"), false);
+});
+
 test("validateCustomTitle trims valid titles", () => {
-  assert.deepEqual(validateCustomTitle("  Project Alpha  "), {
-    valid: true,
-    value: "Project Alpha",
-  });
+  assert.deepEqual(validateCustomTitle("  Project Alpha  "), { valid: true, value: "Project Alpha" });
 });
 
 test("validateCustomTitle rejects empty and non-string values", () => {
