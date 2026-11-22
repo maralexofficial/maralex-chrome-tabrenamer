@@ -50,6 +50,7 @@ export function createTabsApi({ tabs = [] } = {}) {
   return {
     onRemoved: createEvent(),
     onReplaced: createEvent(),
+    onUpdated: createEvent(),
     async query(queryInfo = {}) {
       return [...byId.values()].filter((tab) => {
         if (queryInfo.active !== undefined && tab.active !== queryInfo.active) return false;
