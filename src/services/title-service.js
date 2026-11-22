@@ -4,7 +4,7 @@ import { validateCustomTitle } from "../shared/validators.js";
 const CONTENT_SCRIPT_FILE = "src/content/title-controller.js";
 
 /**
- * Coordinates optional host permissions, content-script registration,
+ * Coordinates required website permissions, content-script registration,
  * document title updates, and session record persistence.
  */
 export class TitleService {
@@ -42,7 +42,7 @@ export class TitleService {
   }
 
   /**
-   * Apply a custom title to a tab after requesting its site permission.
+   * Apply a custom title to a tab after verifying the one-time website permission.
    *
    * @param {chrome.tabs.Tab} tab
    * @param {string} customTitle
@@ -119,8 +119,7 @@ export class TitleService {
   }
 
   /**
-   * Restore the saved page title. The popup requests permission from the
-   * user's click; the background worker verifies the grant before applying.
+   * Restore the saved page title after verifying the one-time website permission.
    *
    * @param {chrome.tabs.Tab} tab
    * @returns {Promise<{ok: boolean, reason?: string}>}
