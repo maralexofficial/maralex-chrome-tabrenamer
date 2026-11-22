@@ -64,9 +64,8 @@ title if the site changes `document.title`. On full navigation, the background
 worker reapplies the saved name after the tab finishes loading and updates
 the original title used by Restore.
 
-Chrome-internal pages and non-HTTP(S) URLs are unsupported. The user must
-explicitly grant each site origin; the extension does not request broad host
-access at install time.
+Chrome-internal pages and non-HTTP(S) URLs are unsupported. The user grants website access once in Chrome; this permission covers all HTTP
+and HTTPS origins. Chrome-internal pages remain unsupported.
 
 ## Storage behavior
 
