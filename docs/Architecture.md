@@ -32,9 +32,10 @@ services.
 
 ### Content script
 
-`src/content/` will apply a custom title to the current document and observe
-page-driven title changes. Content scripts will be injected on demand after
-the user has granted access to the relevant site.
+`src/content/title-controller.js` applies a custom title in the isolated page
+world and observes document-title mutations. A registered document-start
+content script keeps page scripts from replacing the custom title. The
+controller is idempotent within a document and supports explicit restoration.
 
 ### Services
 
@@ -42,7 +43,7 @@ the user has granted access to the relevant site.
   tab-record lifecycle, and stale-record cleanup.
 - `tab-service.js`: Chrome Tabs API facade, custom-title enrichment, and
   lifecycle event registration.
-- `title-service.js`: title application and restoration coordination.
+- `title-service.js`: optional host permission requests, scoped dynamic content-script registration, title application/restoration, and navigation recovery.
 
 ### Shared modules
 
@@ -113,10 +114,12 @@ The initial manifest requests only:
 - `contextMenus`: provide tab context-menu actions.
 - `scripting`: inject the title controller when permitted.
 
-No broad `host_permissions` are requested by the initial manifest. A later
-phase must use optional host permissions and explain to the user that title
-management requires access to the relevant website. Chrome-internal pages and
-other restricted origins cannot be modified.
+No broad `host_permissions` are requested. The manifest declares HTTP and HTTPS
+origins as optional host permissions. When the user saves or restores a title,
+the popup requests only the active tab origin (for example,
+`https://example.com/*`). The permission request is initiated directly from
+the click handler, as required by Chrome. Chrome-internal pages, extension
+pages, and other restricted origins cannot be modified.
 
 ## Message protocol
 
@@ -136,7 +139,7 @@ malformed messages must be ignored safely.
 - EP2: storage and tab services, lifecycle cleanup, and stale-record
   reconciliation.
 - EP3: title manager, observer, permission-aware injection, and navigation
-  recovery.
+  recovery (implemented).
 - EP4: tab context menu actions.
 - EP5: popup tab listing and editing.
 - EP6: permission failures, restricted pages, and lifecycle hardening.
