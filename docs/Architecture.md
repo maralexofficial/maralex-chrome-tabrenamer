@@ -9,6 +9,7 @@ The v1.0 workflow supports:
 - A compact popup that edits only the active tab.
 - A dedicated options page that lists all tabs in the current window.
 - Search, rename, and restore actions on the options page.
+- Eight preset colors per tab, selectable in both popup and options page.
 - Highlighting the active tab in the tab manager.
 - Keeping custom titles while the same tab reloads or navigates, where the
   page permits script injection.
@@ -47,16 +48,17 @@ content script keeps page scripts from replacing the custom title.
 ### Services
 
 - `storage-service.js`: session persistence, validation, serialized writes,
-  tab-record lifecycle, and stale-record cleanup.
+  independent name/color records, tab-record lifecycle, and stale-record cleanup.
 - `tab-service.js`: Chrome Tabs API facade, custom-title enrichment, and
   lifecycle event registration.
 - `title-service.js`: website permission verification, scoped dynamic content-script registration, title application/restoration, and navigation recovery.
 
 ## Data ownership and persistence
 
-The active-tab data store uses `chrome.storage.session`. Records are keyed by
-the decimal string form of `tabId`, allowing two tabs with the same URL to
-have different names. Data survives service-worker suspension/restart but is
+The active-tab data stores use `chrome.storage.session`. Name records and
+color assignments are stored separately and keyed by the decimal string form
+of `tabId`, allowing two tabs with the same URL to have different names and
+colors. Colors can be assigned even when a tab has no custom name. Data survives service-worker suspension/restart but is
 cleared when the browser session ends or the extension is reloaded or disabled.
 
 A record has this shape:
@@ -114,9 +116,10 @@ options page opened in a browser tab while rejecting website content scripts.
 - EP3: title manager, observer, permission-aware injection, and navigation recovery.
 - EP4: experimental separate rename page/context-menu workflow (removed).
 - EP5: compact active-tab popup and dedicated searchable tab manager (implemented).
-- EP6: permission failures, restricted pages, and lifecycle hardening.
-- EP7: unit, integration, and browser verification.
-- EP8: release documentation and packaging.
+- EP6: per-tab preset colors in popup and tab manager (implemented).
+- EP7: permission failures, restricted pages, and lifecycle hardening.
+- EP8: unit, integration, and browser verification.
+- EP9: release documentation and packaging.
 
 ## Quality requirements
 
