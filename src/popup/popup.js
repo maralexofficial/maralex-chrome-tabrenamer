@@ -182,6 +182,9 @@ async function refreshTabs() {
     ]);
 
     tabs.sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+    if (elements.status.textContent === "Loading tabs…") {
+      setStatus("");
+    }
     elements.count.textContent = String(tabs.length);
     elements.list.replaceChildren();
 
