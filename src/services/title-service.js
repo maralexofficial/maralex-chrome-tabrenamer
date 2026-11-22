@@ -332,8 +332,9 @@ export function registerTitleNavigationListener({
       return;
     }
 
-    void titleService.applySavedTitle(tabId, tab?.title ?? "").catch((error) => {
+    return titleService.applySavedTitle(tabId, tab?.title ?? "").catch((error) => {
       logger.error("[TabRenamer] Navigation title recovery failed.", error);
+      return false;
     });
   };
 
