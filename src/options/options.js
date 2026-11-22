@@ -33,14 +33,29 @@ function getPageDetails(tab) {
 }
 
 async function sendTitleOperation(type, tabId, customTitle) {
+  const requestId = globalThis.crypto?.randomUUID?.() ?? String(Date.now()) + "-" + tabId;
+  const message = {
+    type,
+    payload: { tabId, ...(customTitle === undefined ? {} : { customTitle }) },
+  };
+  console.info("[TabRenamer] Sending title operation.", { requestId, message });
+
   try {
-    return await chrome.runtime.sendMessage({
-      type,
-      payload: { tabId, ...(customTitle === undefined ? {} : { customTitle }) },
-    });
+    const response = await chrome.runtime.sendMessage(message);
+    console.info("[TabRenamer] Received title operation response.", { requestId, response });
+    if (response === undefined) {
+      return {
+        ok: false,
+        reason: "The service worker did not respond. Open the TabRenamer service worker console and retry.",
+      };
+    }
+    return response;
   } catch (error) {
-    console.error("[TabRenamer] Background operation failed.", error);
-    return { ok: false, reason: "The background service could not complete the request." };
+    console.error("[TabRenamer] Background operation failed.", { requestId, error });
+    return {
+      ok: false,
+      reason: error?.message || "The background service could not complete the request.",
+    };
   }
 }
 

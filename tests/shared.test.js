@@ -47,6 +47,14 @@ test("accepts extension page when Chrome supplies documentUrl", () => {
   }, "extension-id"), true);
 });
 
+test("accepts extension page when Chrome supplies origin", () => {
+  assert.equal(isTrustedExtensionPageSender({
+    id: "extension-id",
+    origin: "chrome-extension://extension-id",
+    tab: { id: 42 },
+  }, "extension-id"), true);
+});
+
 test("rejects website content scripts and other extension IDs", () => {
   assert.equal(isTrustedExtensionPageSender({
     id: "extension-id", url: "https://example.com/page", tab: { id: 42 },

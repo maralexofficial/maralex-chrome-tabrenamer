@@ -43,15 +43,17 @@ export function isExtensionMessage(value) {
 export function isTrustedExtensionPageSender(sender, extensionId) {
   if (!sender || sender.id !== extensionId) return false;
 
-  // Chrome may expose the initiating extension document through url or
-  // documentUrl depending on the message context and browser version.
-  const sourceUrl = sender.url ?? sender.documentUrl;
-  if (typeof sourceUrl !== "string" || sourceUrl.length === 0) return false;
+  // Chrome exposes the source document through url/documentUrl and may
+  // additionally provide origin. Accept any exact origin belonging to us.
+  const sourceUrls = [sender.url, sender.documentUrl, sender.origin]
+    .filter((value) => typeof value === "string" && value.length > 0);
 
-  try {
-    const url = new URL(sourceUrl);
-    return url.protocol === "chrome-extension:" && url.hostname === extensionId;
-  } catch {
-    return false;
-  }
+  return sourceUrls.some((sourceUrl) => {
+    try {
+      const url = new URL(sourceUrl);
+      return url.protocol === "chrome-extension:" && url.hostname === extensionId;
+    } catch {
+      return false;
+    }
+  });
 }

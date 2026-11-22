@@ -27,7 +27,17 @@ chrome.runtime.onInstalled.addListener((details) => {
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (!isExtensionMessage(message)) return false;
+  console.info("[" + EXTENSION_NAME + "] Runtime message received.", {
+    messageType: message?.type,
+    senderId: sender?.id,
+    senderUrl: sender?.url,
+    senderDocumentUrl: sender?.documentUrl,
+    senderOrigin: sender?.origin,
+  });
+  if (!isExtensionMessage(message)) {
+    console.warn("[" + EXTENSION_NAME + "] Ignored an invalid extension message.");
+    return false;
+  }
   if (message.type === MESSAGE_TYPES.PING) {
     sendResponse({ ok: true, extension: EXTENSION_NAME });
     return false;
@@ -52,14 +62,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ ok: false, reason: "Invalid custom title." });
     return false;
   }
-  if (message.type !== MESSAGE_TYPES.RENAME_TAB && message.type !== MESSAGE_TYPES.RESTORE_TAB) return false;
+  if (message.type !== MESSAGE_TYPES.RENAME_TAB && message.type !== MESSAGE_TYPES.RESTORE_TAB) {
+    sendResponse({ ok: false, reason: "Unsupported TabRenamer operation." });
+    return false;
+  }
 
   void (async () => {
     try {
       const tab = await chrome.tabs.get(payload.tabId);
+      console.info("[" + EXTENSION_NAME + "] Executing title operation.", {
+        operation: message.type,
+        tabId: payload.tabId,
+        url: tab.url,
+      });
       const result = message.type === MESSAGE_TYPES.RENAME_TAB
         ? await titleService.renameTab(tab, payload.customTitle)
         : await titleService.restoreTab(tab);
+      console.info("[" + EXTENSION_NAME + "] Title operation completed.", {
+        operation: message.type,
+        tabId: payload.tabId,
+        result,
+      });
       sendResponse(result);
     } catch (error) {
       console.error("[" + EXTENSION_NAME + "] Title operation failed.", error);
