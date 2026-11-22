@@ -7,8 +7,9 @@ name to each open browser tab.
 
 - **EP1 — Project foundation:** complete.
 - **EP2 — Storage and tab services:** implemented; automated tests included.
-- **EP3 — Title management:** implemented; ready for the first Chrome test.
-- **EP4–EP8:** planned.
+- **EP3 — Title management:** implemented; first Chrome test ready.
+- **EP4 — Tab context menus:** implemented; automated tests included.
+- **EP5–EP8:** planned.
 
 The current build includes session-scoped per-tab storage, a Chrome Tabs API
 facade, tab-close cleanup, replacement-ID migration, and startup reconciliation.
