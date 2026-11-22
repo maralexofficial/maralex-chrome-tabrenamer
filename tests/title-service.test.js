@@ -72,6 +72,13 @@ function createTitleHarness({
   return { service, storageService, tabs, permissions, scripting, calls, tab, registered };
 }
 
+test("manifest requests one-time access to all HTTP and HTTPS websites", () => {
+  const manifest = JSON.parse(fs.readFileSync(new URL("../manifest.json", import.meta.url), "utf8"));
+
+  assert.deepEqual(manifest.host_permissions, ["http://*/*", "https://*/*"]);
+  assert.equal(Object.hasOwn(manifest, "optional_host_permissions"), false);
+});
+
 test("checks the one-time website grant and registers a scoped document-start script", async () => {
   const harness = createTitleHarness();
 
