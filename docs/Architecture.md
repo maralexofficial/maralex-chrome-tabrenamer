@@ -10,12 +10,13 @@ The v1.0 workflow supports:
 - Renaming each supported tab independently from the popup.
 - Highlighting the active tab in the popup.
 - Restoring the original page title for a named tab.
-- Renaming and restoring from the page context menu.
 - Keeping the custom title while the same tab reloads or navigates, where the
   page permits script injection.
 
-Automatic URL-based rules, cross-device synchronization, tab groups, and
-persistence across complete browser restarts are out of scope for v1.0.
+The popup is the only user interface. Renaming never opens another extension
+tab or window. Automatic URL-based rules, cross-device synchronization, tab
+groups, and persistence across complete browser restarts are out of scope for
+v1.0.
 
 ## Runtime components
 
@@ -26,23 +27,13 @@ coordination entry point. It creates the storage and tab services, registers
 tab lifecycle listeners, and reconciles stored tab IDs with Chrome's current
 tab set whenever the worker starts. It must remain safe to suspend and restart.
 
-### Popup and rename page
+### Popup
 
 `src/popup/` contains the current-window tab manager. It queries Chrome for the
 current window's tabs, reads their session-scoped custom names, and sends all
 rename/restore mutations to the service worker. It refreshes when tabs are
 created, removed, activated, or materially updated, while avoiding rerenders
-during text input. `src/rename/` contains the focused rename page opened by
-the page context menu. Both are view layers; storage mutations belong in the
-service worker.
-
-### Context menus
-
-`context-menu-service.js` registers a TabRenamer parent menu with Rename this
-tab… and Restore original page title actions for page context menus. Rename
-opens a dedicated extension page with the clicked tab ID; restore delegates
-directly to `TitleService`. Menu items are rebuilt idempotently when the
-service worker starts.
+during text input. All tab editing happens directly in this popup.
 
 ### Content script
 
@@ -58,7 +49,6 @@ controller is idempotent within a document and supports explicit restoration.
 - `tab-service.js`: Chrome Tabs API facade, custom-title enrichment, and
   lifecycle event registration.
 - `title-service.js`: website permission verification, scoped dynamic content-script registration, title application/restoration, and navigation recovery.
-- `context-menu-service.js`: context-menu registration and action dispatch.
 
 ## Data ownership and persistence
 
@@ -129,7 +119,6 @@ cleanup failures are logged and do not escape the Chrome event callback.
 The initial manifest requests:
 - `tabs`: enumerate and identify tabs.
 - `storage`: store session-scoped records.
-- `contextMenus`: provide page context-menu actions.
 - `scripting`: inject the title controller when permitted.
 
 The manifest declares HTTP and HTTPS origins as required host permissions.
@@ -148,7 +137,9 @@ Internal messages use an envelope:
 
 Message type constants live in `src/shared/constants.js`. Message envelope
 construction and validation live in `src/shared/messages.js`. Unknown or
-malformed messages must be ignored safely.
+malformed messages must be ignored safely. Only the extension popup may issue
+rename and restore operations; messages from website content scripts are
+rejected.
 
 ## Phase boundaries
 
@@ -157,7 +148,7 @@ malformed messages must be ignored safely.
   reconciliation.
 - EP3: title manager, observer, permission-aware injection, and navigation
   recovery (implemented).
-- EP4: page context menu actions (implemented).
+- EP4: experimental separate rename page/context-menu workflow (removed).
 - EP5: current-window popup tab listing and per-tab editing (implemented).
 - EP6: permission failures, restricted pages, and lifecycle hardening.
 - EP7: unit, integration, and browser verification.

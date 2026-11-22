@@ -12,11 +12,12 @@
 3. Select **Load unpacked**.
 4. Choose the repository root directory.
 
-The popup lists all tabs in the current window. Each supported tab has its own
-name field, Save action, and Restore action when a custom name exists. The
-active tab is marked. Chrome-internal and other restricted pages remain visible
-but cannot be renamed. The list refreshes when tabs are created, closed,
-activated, or their title/URL changes.
+The popup is the only user interface. It lists all tabs in the current window.
+Each supported tab has its own name field, Save action, and Restore action when
+a custom name exists. The active tab is marked. Chrome-internal and other
+restricted pages remain visible but cannot be renamed. The list refreshes when
+tabs are created, closed, activated, or their title/URL changes. Renaming
+happens directly in the popup; no additional extension tab is opened.
 
 ## Project layout
 
@@ -24,7 +25,6 @@ activated, or their title/URL changes.
 - `src/content/`: page title controller.
 - `src/services/`: tab, storage, and title services.
 - `src/popup/`: current-window multi-tab manager.
-- `src/rename/`: dedicated rename page opened from the page context menu.
 - `src/shared/`: constants, message contracts, and validation.
 - `tests/helpers/`: Chrome API test doubles.
 - `tests/`: automated unit and integration-style tests.
@@ -59,13 +59,13 @@ The extension requests broad HTTP and HTTPS website access once through the
 manifest's required `host_permissions`. Chrome displays its comprehensive
 website-data warning when the user installs or updates the extension. Saving
 or restoring a title never calls `chrome.permissions.request()` and does not
-show another per-site prompt. The popup and page-context-menu rename page send
-validated requests to the service worker. The worker verifies the permission,
-registers a document-start content script for that exact origin, applies the
-title in the page's isolated world, and owns the storage mutation. The observer
-re-applies the custom title if the site changes `document.title`. On full
-navigation, the background worker reapplies the saved name after the tab
-finishes loading and updates the original title used by Restore.
+show another per-site prompt. The popup sends validated requests to the
+service worker. The worker verifies the permission, registers a document-start
+content script for that exact origin, applies the title in the page's isolated
+world, and owns the storage mutation. The observer re-applies the custom
+title if the site changes `document.title`. On full navigation, the background
+worker reapplies the saved name after the tab finishes loading and updates
+the original title used by Restore.
 
 Chrome-internal pages and non-HTTP(S) URLs are unsupported. The user grants
 website access once in Chrome; this permission covers all HTTP and HTTPS origins.

@@ -1,9 +1,8 @@
 import { EXTENSION_NAME, MESSAGE_TYPES } from "../shared/constants.js";
-import { isExtensionMessage, isTrustedExtensionPageSender } from "../shared/messages.js";
+import { isExtensionMessage } from "../shared/messages.js";
 import { StorageService } from "../services/storage-service.js";
 import { TabService, registerTabLifecycleListeners } from "../services/tab-service.js";
 import { TitleService, registerTitleNavigationListener } from "../services/title-service.js";
-import { registerTabContextMenus } from "../services/context-menu-service.js";
 
 const storageService = new StorageService();
 const tabService = new TabService({ storageService });
@@ -11,7 +10,6 @@ const titleService = new TitleService({ storageService });
 
 registerTabLifecycleListeners({ storageService });
 registerTitleNavigationListener({ titleService });
-registerTabContextMenus({ titleService });
 
 async function reconcileOpenTabs() {
   try {
@@ -36,10 +34,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   }
 
-  // Only this extension's own pages may initiate title operations. A rename
-  // page opened as a tab has sender.tab set, just like a content script, so
-  // validate the sender URL and extension ID instead of rejecting sender.tab.
-  if (!isTrustedExtensionPageSender(sender, chrome.runtime.id)) return false;
+  // Only the extension popup may initiate title operations. Website content
+  // scripts have sender.tab set and are intentionally rejected.
+  if (sender.id !== chrome.runtime.id || sender.tab) return false;
 
   const payload = message.payload;
   if (!payload || !Number.isInteger(payload.tabId) || payload.tabId < 0) {

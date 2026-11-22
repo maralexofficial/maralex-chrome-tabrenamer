@@ -1,11 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import {
-  createMessage,
-  isExtensionMessage,
-  isTrustedExtensionPageSender,
-} from "../src/shared/messages.js";
+import { createMessage, isExtensionMessage } from "../src/shared/messages.js";
 import { isValidTabId, validateCustomTitle } from "../src/shared/validators.js";
 import { MESSAGE_TYPES, TITLE_LIMITS } from "../src/shared/constants.js";
 
@@ -33,27 +29,6 @@ test("isExtensionMessage rejects malformed and unknown messages", () => {
   assert.equal(isExtensionMessage(null), false);
   assert.equal(isExtensionMessage({ type: "UNKNOWN", payload: {} }), false);
   assert.equal(isExtensionMessage({ type: MESSAGE_TYPES.PING, payload: [] }), false);
-});
-
-test("trusts an extension page opened in a tab", () => {
-  assert.equal(isTrustedExtensionPageSender({
-    id: "extension-id",
-    url: "chrome-extension://extension-id/src/rename/rename.html",
-    tab: { id: 42 },
-  }, "extension-id"), true);
-});
-
-test("rejects content scripts and pages from another extension", () => {
-  assert.equal(isTrustedExtensionPageSender({
-    id: "extension-id",
-    url: "https://example.com/page",
-    tab: { id: 42 },
-  }, "extension-id"), false);
-  assert.equal(isTrustedExtensionPageSender({
-    id: "another-extension",
-    url: "chrome-extension://another-extension/popup.html",
-  }, "extension-id"), false);
-  assert.equal(isTrustedExtensionPageSender({ id: "extension-id" }, "extension-id"), false);
 });
 
 test("validateCustomTitle trims valid titles", () => {
