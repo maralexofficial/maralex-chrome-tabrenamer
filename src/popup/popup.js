@@ -44,11 +44,19 @@ async function initialize() {
     elements.pageName.textContent = hostname;
 
     const record = await storageService.get(activeTab.id);
+    activeTab.savedRecord = record;
     activeTab.hasCustomTitle = Boolean(record);
     elements.input.value = record?.customTitle ?? "";
     elements.restore.disabled = !record;
 
-    if (!/^https?:$/.test(new URL(activeTab.url).protocol)) {
+    let isWebPage = false;
+    try {
+      const protocol = new URL(activeTab.url).protocol;
+      isWebPage = protocol === "http:" || protocol === "https:";
+    } catch {
+      isWebPage = false;
+    }
+    if (!isWebPage) {
       elements.input.disabled = true;
       elements.save.disabled = true;
       setStatus("Chrome does not allow title changes on this page.", "error");
@@ -71,6 +79,7 @@ elements.form.addEventListener("submit", async (event) => {
   const result = await titleService.renameTab(activeTab, elements.input.value);
   if (result.ok) {
     activeTab.hasCustomTitle = true;
+    activeTab.savedRecord = await storageService.get(activeTab.id);
     elements.restore.disabled = false;
     setStatus("Custom tab name saved.", "success");
   } else {
@@ -86,9 +95,10 @@ elements.restore.addEventListener("click", async () => {
   setBusy(true);
   setStatus("Restoring the page title…");
 
-  const result = await titleService.restoreTab(activeTab);
+  const result = await titleService.restoreTab(activeTab, activeTab.savedRecord);
   if (result.ok) {
     activeTab.hasCustomTitle = false;
+    activeTab.savedRecord = null;
     elements.input.value = "";
     elements.restore.disabled = true;
     setStatus("Original page title restored.", "success");
