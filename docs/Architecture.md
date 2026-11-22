@@ -24,11 +24,19 @@ coordination entry point. It creates the storage and tab services, registers
 tab lifecycle listeners, and reconciles stored tab IDs with Chrome's current
 tab set whenever the worker starts. It must remain safe to suspend and restart.
 
-### Popup
+### Popup and rename page
 
-`src/popup/` contains the user interface for listing open tabs and editing
-custom titles. The popup is a view layer; storage and tab operations belong in
-services.
+`src/popup/` contains the active-tab popup UI. `src/rename/` contains the focused
+rename page opened by the tab context menu. Both are view layers; storage and
+tab operations belong in services.
+
+### Context menus
+
+`context-menu-service.js` registers a TabRenamer parent menu with Rename this
+tab… and Restore original page title actions. Rename opens a dedicated
+extension page with the clicked tab ID; restore delegates directly to
+`TitleService`. Menu items are rebuilt idempotently when the service worker
+starts.
 
 ### Content script
 
