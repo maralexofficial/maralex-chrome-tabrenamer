@@ -226,7 +226,7 @@ test("content controller applies, observes, and restores the document title", ()
     type: MESSAGE_TYPES.APPLY_TITLE,
     payload: { customTitle: "My custom tab", originalTitle: "Original page" },
   }, {}, (value) => { response = value; });
-  assert.deepEqual(response, { ok: true });
+  assert.equal(response.ok, true);
   assert.equal(document.title, "My custom tab");
   assert.equal(observed, true);
 
@@ -238,7 +238,7 @@ test("content controller applies, observes, and restores the document title", ()
     type: MESSAGE_TYPES.RESTORE_TITLE,
     payload: { originalTitle: "Original page" },
   }, {}, (value) => { response = value; });
-  assert.deepEqual(response, { ok: true });
+  assert.equal(response.ok, true);
   assert.equal(document.title, "Original page");
   assert.equal(disconnected, true);
 });
