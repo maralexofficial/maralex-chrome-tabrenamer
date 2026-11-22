@@ -3,8 +3,7 @@
 ## Requirements
 
 - Google Chrome 111 or newer.
-- A modern JavaScript runtime for running the automated tests (Node.js 20 or
-  newer recommended).
+- Node.js 20 or newer for automated tests.
 
 ## Load the extension
 
@@ -13,8 +12,9 @@
 3. Select **Load unpacked**.
 4. Choose the repository root directory.
 
-The current EP1 build is a foundation only. The popup and worker are not yet
-connected to tab-renaming functionality.
+The current EP2 build provides the storage and tab-management foundation.
+Custom title application and the interactive popup are implemented in later
+phases.
 
 ## Project layout
 
@@ -23,22 +23,39 @@ connected to tab-renaming functionality.
 - `src/services/`: tab, storage, and title services.
 - `src/popup/`: extension popup.
 - `src/shared/`: constants, message contracts, and validation.
-- `tests/`: automated tests.
+- `tests/helpers/`: Chrome API test doubles.
+- `tests/`: automated unit and integration-style tests.
 - `docs/`: architecture and development notes.
 
 ## Tests
 
-EP1 has no external runtime dependencies. Run the shared-module tests with:
+Run all tests:
 
 ```sh
-node --test
+npm test
 ```
 
-The manifest can be parsed and checked with:
+Validate the manifest:
 
 ```sh
-node --input-type=module -e "import fs from 'node:fs'; JSON.parse(fs.readFileSync('manifest.json', 'utf8')); console.log('manifest valid')"
+npm run check:manifest
 ```
+
+The tests use Node's built-in test runner and in-memory Chrome API test
+doubles. They cover storage validation, independent tab records, concurrent
+mutations, tab-ID migration, stale-record cleanup, tab lookup, and lifecycle
+listeners. A real Chrome load-and-interaction test remains part of browser
+verification.
+
+## Storage behavior
+
+Custom tab names are held in `chrome.storage.session`. They survive service
+worker suspension/restart but not the end of the browser session. The
+service-worker startup reconciliation removes records whose tab IDs are no
+longer present.
+
+All mutations should go through the single `StorageService` instance owned by
+the service worker. Its write queue serializes read-modify-write operations.
 
 ## Conventions
 
