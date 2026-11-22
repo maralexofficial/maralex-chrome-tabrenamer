@@ -3,6 +3,7 @@ import { isExtensionMessage } from "../shared/messages.js";
 import { StorageService } from "../services/storage-service.js";
 import { TabService, registerTabLifecycleListeners } from "../services/tab-service.js";
 import { TitleService, registerTitleNavigationListener } from "../services/title-service.js";
+import { registerTabContextMenus } from "../services/context-menu-service.js";
 
 const storageService = new StorageService();
 const tabService = new TabService({ storageService });
@@ -10,6 +11,7 @@ const titleService = new TitleService({ storageService });
 
 registerTabLifecycleListeners({ storageService });
 registerTitleNavigationListener({ titleService });
+registerTabContextMenus({ titleService });
 
 async function reconcileOpenTabs() {
   try {
