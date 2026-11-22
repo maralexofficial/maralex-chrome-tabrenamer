@@ -45,7 +45,7 @@ npm run check:manifest
 The tests use Node's built-in test runner and in-memory Chrome API test
 doubles. They cover storage validation, independent tab records, concurrent
 mutations, tab-ID migration, stale-record cleanup, tab lookup, lifecycle
-listeners, optional permission decisions, scoped script registration,
+listeners, one-time website permission checks, scoped script registration,
 content-controller behavior, title restoration, and navigation recovery. A
 real Chrome load-and-interaction test is still required to verify browser API
 behavior and actual website permissions.
@@ -56,16 +56,16 @@ The extension requests broad HTTP and HTTPS website access once through the
 manifest's required `host_permissions`. Chrome displays its comprehensive
 website-data warning when the user installs or updates the extension. Saving
 or restoring a title never calls `chrome.permissions.request()` and does not
-show another per-site prompt. The popup sends a validated request to the service worker. The worker verifies
-the permission, registers a document-start content script for that exact
-origin, applies the title in the page's isolated world, and owns the storage
-mutation. The popup does not write tab records directly. The observer re-applies the custom
+show another per-site prompt. The popup and context-menu rename page send validated requests to the service
+worker. The worker verifies the permission, registers a document-start content
+script for that exact origin, applies the title in the page's isolated world,
+and owns the storage mutation. The popup does not write tab records directly. The observer re-applies the custom
 title if the site changes `document.title`. On full navigation, the background
 worker reapplies the saved name after the tab finishes loading and updates
 the original title used by Restore.
 
-Chrome-internal pages and non-HTTP(S) URLs are unsupported. The user grants website access once in Chrome; this permission covers all HTTP
-and HTTPS origins. Chrome-internal pages remain unsupported.
+Chrome-internal pages and non-HTTP(S) URLs are unsupported. The user grants
+website access once in Chrome; this permission covers all HTTP and HTTPS origins.
 
 ## Storage behavior
 
