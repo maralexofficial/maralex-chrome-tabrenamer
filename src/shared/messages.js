@@ -41,9 +41,15 @@ export function isExtensionMessage(value) {
  * @returns {boolean}
  */
 export function isTrustedExtensionPageSender(sender, extensionId) {
-  if (!sender || sender.id !== extensionId || typeof sender.url !== "string") return false;
+  if (!sender || sender.id !== extensionId) return false;
+
+  // Chrome may expose the initiating extension document through url or
+  // documentUrl depending on the message context and browser version.
+  const sourceUrl = sender.url ?? sender.documentUrl;
+  if (typeof sourceUrl !== "string" || sourceUrl.length === 0) return false;
+
   try {
-    const url = new URL(sender.url);
+    const url = new URL(sourceUrl);
     return url.protocol === "chrome-extension:" && url.hostname === extensionId;
   } catch {
     return false;
