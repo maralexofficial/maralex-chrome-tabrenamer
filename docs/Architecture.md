@@ -99,8 +99,9 @@ extension contexts.
 are enriched with `customTitle`, which is either the saved name or `null`.
 The URL is never used as an identity key.
 
-The popup requests the exact active-site origin from a direct user click and
-sends a validated title-operation message to the service worker. The worker
+The extension requests HTTP and HTTPS website access once through required
+host permissions. The popup sends a validated title-operation message to the
+service worker without requesting per-site access. The worker
 re-reads the tab from Chrome, verifies the permission grant, applies the title,
 and performs all storage mutations through its single `StorageService`
 instance. This avoids popup/worker read-modify-write races.
