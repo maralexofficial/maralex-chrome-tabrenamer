@@ -183,24 +183,16 @@ export class TitleService {
    * @returns {Promise<boolean>}
    */
   async applySavedTitle(tabId, pageTitle = "") {
-    const record = await this.#storage.get(tabId);
-    if (!record) {
-      return false;
-    }
-
-    let tab;
     try {
-      tab = await this.#tabs.get(tabId);
-    } catch {
-      return false;
-    }
+      const record = await this.#storage.get(tabId);
+      if (!record) return false;
 
-    const originPattern = this.#getOriginPattern(tab.url);
-    if (!originPattern || !(await this.#permissions.contains({ origins: [originPattern] }))) {
-      return false;
-    }
+      const tab = await this.#tabs.get(tabId);
+      const originPattern = this.#getOriginPattern(tab.url);
+      if (!originPattern || !(await this.#permissions.contains({ origins: [originPattern] }))) {
+        return false;
+      }
 
-    try {
       await this.#registerContentScript(originPattern);
       await this.#ensureController(tabId);
 

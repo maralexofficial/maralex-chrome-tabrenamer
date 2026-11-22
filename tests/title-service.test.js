@@ -14,6 +14,8 @@ import { createEvent, createMemoryStorageArea } from "./helpers/mock-chrome.js";
 function createTitleHarness({
   tab = { id: 7, url: "https://example.com/dashboard", title: "Dashboard" },
   permissionGranted = true,
+  permissionError = null,
+  tabAvailable = true,
   requestResult = true,
   sendResponse = { ok: true },
 } = {}) {
@@ -26,7 +28,7 @@ function createTitleHarness({
   });
   const tabs = {
     async get(tabId) {
-      if (tabId !== tab.id) throw new Error("No tab");
+      if (tabId !== tab.id || !tabAvailable) throw new Error("No tab");
       return { ...tab };
     },
     async sendMessage(tabId, message) {
@@ -42,6 +44,7 @@ function createTitleHarness({
     },
     async contains(details) {
       calls.push({ kind: "contains", details });
+      if (permissionError) throw permissionError;
       return permissionGranted;
     },
   };
@@ -170,7 +173,21 @@ test("reapplies a saved title after navigation and updates the restore title", a
   assert.equal(message.payload.originalTitle, "New page title");
 });
 
-test("does not inject during navigation if optional host permission was revoked", async () => {
+test("handles a rejected permission check during navigation without throwing", async () => {
+  const harness = createTitleHarness({ permissionError: new Error("permission API unavailable") });
+  await harness.storageService.setTabName(7, "Project tab", "Dashboard");
+  assert.equal(await harness.service.applySavedTitle(7, "Dashboard"), false);
+  assert.equal(harness.calls.some((call) => call.kind === "inject"), false);
+});
+
+test("handles a tab disappearing before navigation recovery", async () => {
+  const harness = createTitleHarness({ tabAvailable: false });
+  await harness.storageService.setTabName(7, "Project tab", "Dashboard");
+  assert.equal(await harness.service.applySavedTitle(7, "Dashboard"), false);
+  assert.equal(harness.calls.some((call) => call.kind === "inject"), false);
+});
+
+test("does not inject during navigation if website permission was revoked", async () => {
   const harness = createTitleHarness({ permissionGranted: false });
   await harness.storageService.setTabName(7, "Project tab", "Dashboard");
 
