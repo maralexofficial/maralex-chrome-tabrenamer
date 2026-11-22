@@ -35,3 +35,10 @@ button[hidden] { display: none; }
 .popup__status[data-kind="error"] { color: #dc2626; }
 .manage-button { display: flex; justify-content: center; align-items: center; gap: 8px; width: 100%; min-height: 38px; }
 .popup__footer { margin-top: 0; font-size: 10px; }
+
+.active-tab--colored { border-left: 5px solid var(--tab-color); background: color-mix(in srgb, var(--tab-color) 8%, Canvas); }
+.active-tab__colors { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; padding-top: 2px; }
+.color-swatch { width: 18px; min-height: 18px; height: 18px; padding: 0; border: 2px solid transparent; border-radius: 50%; box-shadow: 0 0 0 1px color-mix(in srgb, CanvasText 25%, transparent); }
+.color-swatch--selected { outline: 2px solid CanvasText; outline-offset: 2px; }
+.color-swatch--none { position: relative; background: Canvas; border: 1px solid color-mix(in srgb, CanvasText 35%, transparent); }
+.color-swatch--none::after { content: ""; position: absolute; top: 7px; left: 1px; width: 13px; height: 1px; background: #dc2626; transform: rotate(-45deg); }

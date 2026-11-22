@@ -1,4 +1,5 @@
 import { STORAGE_KEYS } from "../shared/constants.js";
+import { isValidTabColor } from "../shared/tab-colors.js";
 import { isValidTabId, validateCustomTitle } from "../shared/validators.js";
 
 const DEFAULT_STORAGE_AREA = "session";
@@ -133,12 +134,36 @@ export class StorageService {
    */
   async remove(tabId) {
     this.#assertTabId(tabId);
-
-    return this.#mutate((records) => {
+    const removed = await this.#mutate((records) => {
       const key = String(tabId);
       const existed = Object.hasOwn(records, key);
       delete records[key];
       return existed;
+    });
+    await this.#mutateColors((colors) => { delete colors[String(tabId)]; });
+    return removed;
+  }
+
+  async getAllTabColors() {
+    await this.#writeQueue;
+    return this.#readColors();
+  }
+
+  async getTabColor(tabId) {
+    this.#assertTabId(tabId);
+    await this.#writeQueue;
+    const colors = await this.#readColors();
+    return colors[String(tabId)] ?? null;
+  }
+
+  async setTabColor(tabId, color) {
+    this.#assertTabId(tabId);
+    if (!isValidTabColor(color)) throw new TypeError("Tab color must be one of the supported preset colors.");
+    return this.#mutateColors((colors) => {
+      const key = String(tabId);
+      if (color === null) delete colors[key];
+      else colors[key] = color;
+      return color;
     });
   }
 
@@ -158,22 +183,24 @@ export class StorageService {
       return false;
     }
 
-    return this.#mutate((records) => {
+    const movedRecord = await this.#mutate((records) => {
       const oldKey = String(removedTabId);
       const newKey = String(addedTabId);
       const oldRecord = records[oldKey];
-
-      if (!oldRecord) {
-        return false;
-      }
-
-      if (!Object.hasOwn(records, newKey)) {
-        records[newKey] = { ...oldRecord, updatedAt: this.#now() };
-      }
-
+      if (!oldRecord) return false;
+      if (!Object.hasOwn(records, newKey)) records[newKey] = { ...oldRecord, updatedAt: this.#now() };
       delete records[oldKey];
       return true;
     });
+    const movedColor = await this.#mutateColors((colors) => {
+      const oldKey = String(removedTabId);
+      const newKey = String(addedTabId);
+      if (!Object.hasOwn(colors, oldKey)) return false;
+      if (!Object.hasOwn(colors, newKey)) colors[newKey] = colors[oldKey];
+      delete colors[oldKey];
+      return true;
+    });
+    return movedRecord || movedColor;
   }
 
   /**
@@ -189,18 +216,40 @@ export class StorageService {
 
     const existing = new Set(existingTabIds.map(String));
 
-    return this.#mutate((records) => {
-      let removed = 0;
-
+    const removed = await this.#mutate((records) => {
+      let count = 0;
       for (const key of Object.keys(records)) {
-        if (!existing.has(key)) {
-          delete records[key];
-          removed += 1;
-        }
+        if (!existing.has(key)) { delete records[key]; count += 1; }
       }
-
-      return removed;
+      return count;
     });
+    await this.#mutateColors((colors) => {
+      for (const key of Object.keys(colors)) if (!existing.has(key)) delete colors[key];
+    });
+    return removed;
+  }
+
+  async #readColors() {
+    const stored = await this.#storageArea.get(STORAGE_KEYS.TAB_COLORS);
+    const value = stored?.[STORAGE_KEYS.TAB_COLORS];
+    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+    const normalized = {};
+    for (const [key, color] of Object.entries(value)) {
+      const tabId = Number(key);
+      if (isValidTabId(tabId) && String(tabId) === key && isValidTabColor(color) && color !== null) normalized[key] = color;
+    }
+    return normalized;
+  }
+
+  #mutateColors(mutator) {
+    const operation = this.#writeQueue.then(async () => {
+      const colors = await this.#readColors();
+      const result = await mutator(colors);
+      await this.#storageArea.set({ [STORAGE_KEYS.TAB_COLORS]: colors });
+      return result;
+    });
+    this.#writeQueue = operation.catch(() => undefined);
+    return operation;
   }
 
   async #readRecords() {

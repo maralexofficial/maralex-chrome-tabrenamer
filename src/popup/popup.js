@@ -1,5 +1,6 @@
 import { MESSAGE_TYPES } from "../shared/constants.js";
 import { StorageService } from "../services/storage-service.js";
+import { TAB_COLORS } from "../shared/tab-colors.js";
 
 const elements = {
   activeTab: document.querySelector("#active-tab"),
@@ -11,6 +12,7 @@ const elements = {
 const storageService = new StorageService();
 let activeTabId = null;
 let currentRecord = null;
+let currentTabColor = null;
 
 function setStatus(message, kind = "neutral") {
   elements.status.textContent = message;
@@ -41,6 +43,41 @@ async function sendTitleOperation(type, tabId, customTitle) {
   }
 }
 
+function createColorPicker(tabId, selectedColor) {
+  const picker = document.createElement("div");
+  picker.className = "active-tab__colors";
+  picker.setAttribute("role", "group");
+  picker.setAttribute("aria-label", "Tab color");
+  const choices = [{ id: "none", label: "No color", value: null }, ...TAB_COLORS];
+  for (const choice of choices) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "color-swatch" + (choice.value === selectedColor ? " color-swatch--selected" : "");
+    button.title = choice.label;
+    button.setAttribute("aria-label", choice.label);
+    button.setAttribute("aria-pressed", String(choice.value === selectedColor));
+    if (choice.value) button.style.backgroundColor = choice.value;
+    else button.classList.add("color-swatch--none");
+    button.addEventListener("click", async () => {
+      picker.querySelectorAll("button").forEach((item) => { item.disabled = true; });
+      try {
+        await storageService.setTabColor(tabId, choice.value);
+        currentTabColor = choice.value;
+        elements.activeTab.classList.toggle("active-tab--colored", Boolean(choice.value));
+        if (choice.value) elements.activeTab.style.setProperty("--tab-color", choice.value);
+        else elements.activeTab.style.removeProperty("--tab-color");
+        setStatus(choice.value ? "Tab color saved." : "Tab color cleared.", "success");
+        picker.replaceWith(createColorPicker(tabId, currentTabColor));
+      } catch (error) {
+        setStatus(error?.message || "Could not save tab color.", "error");
+        picker.querySelectorAll("button").forEach((item) => { item.disabled = false; });
+      }
+    });
+    picker.append(button);
+  }
+  return picker;
+}
+
 function renderActiveTab(tab) {
   elements.activeTab.replaceChildren();
   elements.activeLabel.hidden = !tab;
@@ -55,6 +92,9 @@ function renderActiveTab(tab) {
 
   activeTabId = tab.id;
   const details = getPageDetails(tab);
+  elements.activeTab.classList.toggle("active-tab--colored", Boolean(currentTabColor));
+  if (currentTabColor) elements.activeTab.style.setProperty("--tab-color", currentTabColor);
+  else elements.activeTab.style.removeProperty("--tab-color");
   const heading = document.createElement("div");
   heading.className = "active-tab__heading";
 
@@ -101,7 +141,7 @@ function renderActiveTab(tab) {
   save.disabled = !details.supported;
   restore.disabled = !details.supported;
   form.append(input, save, restore);
-  elements.activeTab.append(form);
+  elements.activeTab.append(form, createColorPicker(tab.id, currentTabColor));
 
   if (!details.supported) {
     const note = document.createElement("p");
@@ -163,7 +203,10 @@ async function loadActiveTab() {
       renderActiveTab(null);
       return;
     }
-    currentRecord = await storageService.get(tab.id);
+    [currentRecord, currentTabColor] = await Promise.all([
+      storageService.get(tab.id),
+      storageService.getTabColor(tab.id),
+    ]);
     renderActiveTab(tab);
   } catch (error) {
     console.error("[TabRenamer] Could not load active tab.", error);

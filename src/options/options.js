@@ -1,5 +1,6 @@
 import { StorageService } from "../services/storage-service.js";
 import { TitleService } from "../services/title-service.js";
+import { TAB_COLORS } from "../shared/tab-colors.js";
 
 const elements = {
   list: document.querySelector("#tab-list"),
@@ -15,6 +16,7 @@ let refreshInProgress = false;
 let refreshRequested = false;
 let latestTabs = [];
 let latestRecords = {};
+let latestTabColors = {};
 
 function setStatus(message, kind = "neutral") {
   elements.status.textContent = message;
@@ -48,10 +50,44 @@ async function sendTitleOperation(type, tabId, customTitle) {
   }
 }
 
+function createColorPicker(tabId, selectedColor) {
+  const picker = document.createElement("div");
+  picker.className = "tab-card__colors";
+  picker.setAttribute("role", "group");
+  picker.setAttribute("aria-label", "Tab color");
+  const choices = [{ id: "none", label: "No color", value: null }, ...TAB_COLORS];
+  for (const choice of choices) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "color-swatch" + (choice.value === selectedColor ? " color-swatch--selected" : "");
+    button.title = choice.label;
+    button.setAttribute("aria-label", choice.label);
+    button.setAttribute("aria-pressed", String(choice.value === selectedColor));
+    if (choice.value) button.style.backgroundColor = choice.value;
+    else button.classList.add("color-swatch--none");
+    button.addEventListener("click", async () => {
+      picker.querySelectorAll("button").forEach((item) => { item.disabled = true; });
+      try {
+        await storageService.setTabColor(tabId, choice.value);
+        latestTabColors[String(tabId)] = choice.value;
+        setStatus(choice.value ? "Tab color saved." : "Tab color cleared.", "success");
+        renderTabs();
+      } catch (error) {
+        setStatus(error?.message || "Could not save tab color.", "error");
+        picker.querySelectorAll("button").forEach((item) => { item.disabled = false; });
+      }
+    });
+    picker.append(button);
+  }
+  return picker;
+}
+
 function createTabCard(tab, record) {
   const card = document.createElement("article");
   card.className = "tab-card";
   if (tab.active) card.classList.add("tab-card--active");
+  const tabColor = latestTabColors[String(tab.id)] ?? null;
+  if (tabColor) { card.classList.add("tab-card--colored"); card.style.setProperty("--tab-color", tabColor); }
 
   const heading = document.createElement("div");
   heading.className = "tab-card__heading";
@@ -145,7 +181,7 @@ function createTabCard(tab, record) {
     }
   });
 
-  card.append(heading, form);
+  card.append(heading, form, createColorPicker(tab.id, tabColor));
   if (!supported) {
     const note = document.createElement("p");
     note.className = "tab-card__note";
@@ -188,14 +224,16 @@ async function refreshTabs() {
   }
   refreshInProgress = true;
   try {
-    const [tabs, records] = await Promise.all([
+    const [tabs, records, colors] = await Promise.all([
       chrome.tabs.query({ currentWindow: true }),
       storageService.getAll(),
+      storageService.getAllTabColors(),
     ]);
     latestTabs = tabs
       .filter((tab) => tab.url !== ownPageUrl && !tab.url?.startsWith(ownPageUrl + "?"))
       .sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
     latestRecords = records;
+    latestTabColors = colors;
     setStatus("");
     renderTabs();
   } catch (error) {

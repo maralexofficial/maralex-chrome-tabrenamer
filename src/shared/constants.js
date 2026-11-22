@@ -14,6 +14,7 @@ export const MESSAGE_TYPES = Object.freeze({
 
 export const STORAGE_KEYS = Object.freeze({
   TAB_NAMES: "tabNames",
+  TAB_COLORS: "tabColors",
 });
 
 export const TITLE_LIMITS = Object.freeze({

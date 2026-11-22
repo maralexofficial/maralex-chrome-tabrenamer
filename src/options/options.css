@@ -37,3 +37,11 @@ button:disabled, input:disabled { opacity: .5; cursor: not-allowed; }
 .tab-list__empty { grid-column: 1 / -1; margin: 36px 0; color: GrayText; font-size: 13px; text-align: center; }
 .manager__footer { margin-top: 20px; color: GrayText; font-size: 11px; }
 @media (max-width: 520px) { .manager { width: min(100% - 24px, 1040px); padding-top: 26px; } .manager__header { align-items: flex-start; } .manager__toolbar { flex-direction: column; } }
+
+.tab-card--colored { border-left: 5px solid var(--tab-color); background: color-mix(in srgb, var(--tab-color) 7%, Canvas); }
+.tab-card__colors { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; padding-top: 2px; }
+.color-swatch { width: 18px; min-height: 18px; height: 18px; padding: 0; border: 2px solid transparent; border-radius: 50%; box-shadow: 0 0 0 1px color-mix(in srgb, CanvasText 25%, transparent); }
+.color-swatch--selected { outline: 2px solid CanvasText; outline-offset: 2px; }
+.color-swatch--none { position: relative; background: Canvas; border: 1px solid color-mix(in srgb, CanvasText 35%, transparent); }
+.color-swatch--none::after { content: ""; position: absolute; top: 7px; left: 1px; width: 13px; height: 1px; background: #dc2626; transform: rotate(-45deg); }
+.color-swatch:disabled { opacity: .5; }

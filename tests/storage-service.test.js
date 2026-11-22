@@ -63,6 +63,42 @@ test("preserves original title and creation timestamp when renaming again", asyn
   assert.ok(second.updatedAt > first.updatedAt);
 });
 
+test("stores independent preset colors without requiring a custom title", async () => {
+  const { service } = createService();
+  assert.equal(await service.getTabColor(9), null);
+  await service.setTabColor(9, "#3b82f6");
+  await service.setTabColor(10, "#22c55e");
+  assert.equal(await service.getTabColor(9), "#3b82f6");
+  assert.equal(await service.getTabColor(10), "#22c55e");
+  assert.deepEqual(await service.getAllTabColors(), { "9": "#3b82f6", "10": "#22c55e" });
+});
+
+test("clears colors and rejects values outside the preset palette", async () => {
+  const { service } = createService();
+  await service.setTabColor(9, "#ef4444");
+  await assert.rejects(service.setTabColor(9, "#123456"), TypeError);
+  await service.setTabColor(9, null);
+  assert.equal(await service.getTabColor(9), null);
+});
+
+test("cleans up and migrates tab colors with tab lifecycle", async () => {
+  const { service } = createService();
+  await service.setTabColor(20, "#a855f7");
+  await service.migrateTabId(20, 21);
+  assert.equal(await service.getTabColor(20), null);
+  assert.equal(await service.getTabColor(21), "#a855f7");
+  await service.removeMissingTabs([]);
+  assert.equal(await service.getTabColor(21), null);
+});
+
+test("removing a tab record also removes its color", async () => {
+  const { service } = createService();
+  await service.setTabName(7, "Named");
+  await service.setTabColor(7, "#f97316");
+  await service.remove(7);
+  assert.equal(await service.getTabColor(7), null);
+});
+
 test("rejects invalid tab IDs and custom titles", async () => {
   const { service } = createService();
 
