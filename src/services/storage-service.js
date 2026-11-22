@@ -93,6 +93,39 @@ export class StorageService {
   }
 
   /**
+   * Update the page title captured for the current navigation without
+   * changing the user's custom title or the record creation timestamp.
+   *
+   * @param {number} tabId
+   * @param {string} originalTitle
+   * @returns {Promise<TabNameRecord|null>}
+   */
+  async updateOriginalTitle(tabId, originalTitle) {
+    this.#assertTabId(tabId);
+
+    if (typeof originalTitle !== "string") {
+      throw new TypeError("Original title must be a string.");
+    }
+
+    return this.#mutate((records) => {
+      const key = String(tabId);
+      const previous = records[key];
+
+      if (!previous) {
+        return null;
+      }
+
+      const updated = {
+        ...previous,
+        originalTitle,
+        updatedAt: this.#now(),
+      };
+      records[key] = updated;
+      return { ...updated };
+    });
+  }
+
+  /**
    * Remove a tab's custom title.
    *
    * @param {number} tabId
