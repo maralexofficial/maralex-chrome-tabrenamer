@@ -21,7 +21,8 @@ its original page title. Full multi-tab listing and management remain in EP5.
 - `src/background/`: service worker and browser event handlers.
 - `src/content/`: page title controller.
 - `src/services/`: tab, storage, and title services.
-- `src/popup/`: extension popup.
+- `src/popup/`: active-tab extension popup.
+- `src/rename/`: dedicated rename page opened from the tab context menu.
 - `src/shared/`: constants, message contracts, and validation.
 - `tests/helpers/`: Chrome API test doubles.
 - `tests/`: automated unit and integration-style tests.
