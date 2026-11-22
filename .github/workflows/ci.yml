@@ -25,5 +25,8 @@ jobs:
       - name: Run unit tests
         run: npm test
 
+      - name: Validate JavaScript syntax
+        run: npm run check:syntax
+
       - name: Validate extension manifest
         run: npm run check:manifest
