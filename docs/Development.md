@@ -52,10 +52,11 @@ behavior and actual website permissions.
 
 ## Title management and site access
 
-The popup requests optional access only for the active HTTP(S) origin when a
-user saves or restores a title. Do not move `chrome.permissions.request()` out
-of the direct popup click flow: Chrome requires a user gesture. After the grant,
-the popup sends a validated request to the service worker. The worker verifies
+The extension requests broad HTTP and HTTPS website access once through the
+manifest's required `host_permissions`. Chrome displays its comprehensive
+website-data warning when the user installs or updates the extension. Saving
+or restoring a title never calls `chrome.permissions.request()` and does not
+show another per-site prompt. The popup sends a validated request to the service worker. The worker verifies
 the permission, registers a document-start content script for that exact
 origin, applies the title in the page's isolated world, and owns the storage
 mutation. The popup does not write tab records directly. The observer re-applies the custom
