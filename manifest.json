@@ -17,5 +17,9 @@
   "action": {
     "default_title": "TabRenamer",
     "default_popup": "src/popup/popup.html"
-  }
+  },
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ]
 }
