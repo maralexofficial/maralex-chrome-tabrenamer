@@ -258,3 +258,30 @@ test("content controller installation is idempotent in one document", () => {
 
   assert.equal(messageListeners.size, 1);
 });
+
+test("background operation verifies a popup-granted permission without requesting again", async () => {
+  const harness = createTitleHarness();
+
+  const result = await harness.service.renameTab(harness.tab, "Granted in popup", {
+    permissionGranted: true,
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(harness.calls.some((call) => call.kind === "request"), false);
+  assert.ok(harness.calls.some((call) => call.kind === "contains"));
+  assert.equal((await harness.storageService.get(7)).customTitle, "Granted in popup");
+});
+
+test("background restore verifies the existing permission before restoring", async () => {
+  const harness = createTitleHarness();
+  await harness.storageService.setTabName(7, "Custom", "Dashboard");
+
+  const result = await harness.service.restoreTab(harness.tab, undefined, {
+    permissionGranted: true,
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(harness.calls.some((call) => call.kind === "request"), false);
+  assert.ok(harness.calls.some((call) => call.kind === "contains"));
+  assert.equal(await harness.storageService.get(7), null);
+});
