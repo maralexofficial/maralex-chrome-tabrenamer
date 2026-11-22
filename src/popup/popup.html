@@ -12,11 +12,26 @@
     <main class="popup">
       <header class="popup__header">
         <h1>TabRenamer</h1>
-        <p>Give your tabs meaningful names.</p>
+        <p>Give the current tab a name you recognize.</p>
       </header>
-      <section class="popup__empty" aria-live="polite">
-        <p>Tab management will be available in a later implementation phase.</p>
+      <section class="popup__panel">
+        <p id="page-name" class="popup__page-name">Loading current tab…</p>
+        <form id="rename-form">
+          <label for="custom-title">Custom tab name</label>
+          <input id="custom-title" name="customTitle" type="text" maxlength="80"
+            placeholder="e.g. Project dashboard" autocomplete="off" required>
+          <button id="save-button" type="submit">Save tab name</button>
+        </form>
+        <button id="restore-button" class="button button--secondary" type="button" disabled>
+          Restore page title
+        </button>
+        <p id="status" class="popup__status" role="status" aria-live="polite">
+          Site access is requested only when you save or restore a title.
+        </p>
       </section>
+      <footer class="popup__footer">
+        Website access is limited to the current site.
+      </footer>
     </main>
   </body>
 </html>
