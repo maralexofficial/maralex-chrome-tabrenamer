@@ -39,6 +39,14 @@ test("trusts extension options page opened in a tab", () => {
   }, "extension-id"), true);
 });
 
+test("accepts extension page when Chrome supplies documentUrl", () => {
+  assert.equal(isTrustedExtensionPageSender({
+    id: "extension-id",
+    documentUrl: "chrome-extension://extension-id/src/options/options.html",
+    tab: { id: 42 },
+  }, "extension-id"), true);
+});
+
 test("rejects website content scripts and other extension IDs", () => {
   assert.equal(isTrustedExtensionPageSender({
     id: "extension-id", url: "https://example.com/page", tab: { id: 42 },
