@@ -51,7 +51,8 @@ controller is idempotent within a document and supports explicit restoration.
   tab-record lifecycle, and stale-record cleanup.
 - `tab-service.js`: Chrome Tabs API facade, custom-title enrichment, and
   lifecycle event registration.
-- `title-service.js`: optional host permission requests, scoped dynamic content-script registration, title application/restoration, and navigation recovery.
+- `title-service.js`: website permission verification, scoped dynamic content-script registration, title application/restoration, and navigation recovery.
+- `context-menu-service.js`: context-menu registration and action dispatch.
 
 ### Shared modules
 
