@@ -11,26 +11,20 @@
   <body>
     <main class="popup">
       <header class="popup__header">
-        <h1>TabRenamer</h1>
-        <p>Give the current tab a name you recognize.</p>
+        <div>
+          <h1>TabRenamer</h1>
+          <p>Manage the names of your open tabs.</p>
+        </div>
+        <span id="tab-count" class="popup__count">…</span>
       </header>
-      <section class="popup__panel">
-        <p id="page-name" class="popup__page-name">Loading current tab…</p>
-        <form id="rename-form">
-          <label for="custom-title">Custom tab name</label>
-          <input id="custom-title" name="customTitle" type="text" maxlength="80"
-            placeholder="e.g. Project dashboard" autocomplete="off" required>
-          <button id="save-button" type="submit">Save tab name</button>
-        </form>
-        <button id="restore-button" class="button button--secondary" type="button" disabled>
-          Restore page title
-        </button>
-        <p id="status" class="popup__status" role="status" aria-live="polite">
-          Website access is granted once in Chrome. No further site prompts are needed.
-        </p>
+      <p id="status" class="popup__status" role="status" aria-live="polite">
+        Loading tabs…
+      </p>
+      <section id="tab-list" class="tab-list" aria-label="Open tabs">
+        <p class="tab-list__empty">Loading tabs…</p>
       </section>
       <footer class="popup__footer">
-        TabRenamer can manage titles on all HTTP and HTTPS websites.
+        Names are stored separately for each tab during this browser session.
       </footer>
     </main>
   </body>

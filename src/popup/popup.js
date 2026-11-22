@@ -2,131 +2,230 @@ import { MESSAGE_TYPES } from "../shared/constants.js";
 import { StorageService } from "../services/storage-service.js";
 
 const elements = {
-  pageName: document.querySelector("#page-name"),
-  form: document.querySelector("#rename-form"),
-  input: document.querySelector("#custom-title"),
-  save: document.querySelector("#save-button"),
-  restore: document.querySelector("#restore-button"),
+  list: document.querySelector("#tab-list"),
+  count: document.querySelector("#tab-count"),
   status: document.querySelector("#status"),
 };
 
 const storageService = new StorageService();
-let activeTab = null;
+let refreshInProgress = false;
+let refreshRequested = false;
 
 function setStatus(message, kind = "neutral") {
   elements.status.textContent = message;
   elements.status.dataset.kind = kind;
 }
 
-function setBusy(busy) {
-  elements.save.disabled = busy || !activeTab?.isSupported;
-  elements.restore.disabled = busy || !activeTab?.hasCustomTitle;
-}
-
-function getOriginPattern(rawUrl) {
+function getPageDetails(tab) {
   try {
-    const url = new URL(rawUrl);
-    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
-    return `${url.origin}/*`;
+    const url = new URL(tab.url);
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return { hostname: "Restricted Chrome page", supported: false };
+    }
+    return { hostname: url.hostname || url.origin, supported: true };
   } catch {
-    return null;
+    return { hostname: "Page address unavailable", supported: false };
   }
 }
 
-async function sendTitleOperation(message) {
+async function sendTitleOperation(type, tabId, customTitle) {
   try {
-    return await chrome.runtime.sendMessage(message);
+    return await chrome.runtime.sendMessage({
+      type,
+      payload: {
+        tabId,
+        ...(customTitle === undefined ? {} : { customTitle }),
+      },
+    });
   } catch (error) {
     console.error("[TabRenamer] Background operation failed.", error);
     return { ok: false, reason: "The background service could not complete the request." };
   }
 }
 
-async function initialize() {
-  try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    activeTab = tab ?? null;
+function createTabCard(tab, record) {
+  const card = document.createElement("article");
+  card.className = "tab-card";
+  if (tab.active) card.classList.add("tab-card--active");
 
-    if (!activeTab || !Number.isInteger(activeTab.id)) {
-      elements.pageName.textContent = "No active tab found.";
-      elements.form.hidden = true;
+  const heading = document.createElement("div");
+  heading.className = "tab-card__heading";
+
+  if (tab.favIconUrl) {
+    const favicon = document.createElement("img");
+    favicon.className = "tab-card__favicon";
+    favicon.src = tab.favIconUrl;
+    favicon.alt = "";
+    favicon.addEventListener("error", () => favicon.remove(), { once: true });
+    heading.append(favicon);
+  }
+
+  const titleGroup = document.createElement("div");
+  titleGroup.className = "tab-card__title-group";
+
+  const title = document.createElement("p");
+  title.className = "tab-card__title";
+  title.textContent = record?.customTitle || tab.title || "Untitled tab";
+  titleGroup.append(title);
+
+  const details = document.createElement("p");
+  details.className = "tab-card__details";
+  details.textContent = getPageDetails(tab).hostname;
+  titleGroup.append(details);
+  heading.append(titleGroup);
+
+  if (tab.active) {
+    const active = document.createElement("span");
+    active.className = "tab-card__active";
+    active.textContent = "Active";
+    heading.append(active);
+  }
+
+  const form = document.createElement("form");
+  form.className = "tab-card__form";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.maxLength = 80;
+  input.value = record?.customTitle ?? "";
+  input.placeholder = "Enter a name for this tab";
+  input.autocomplete = "off";
+  input.setAttribute("aria-label", "Custom name for " + (tab.title || "tab"));
+
+  const save = document.createElement("button");
+  save.type = "submit";
+  save.textContent = "Save";
+
+  const restore = document.createElement("button");
+  restore.type = "button";
+  restore.className = "button button--secondary";
+  restore.textContent = "Restore";
+  restore.hidden = !record;
+
+  const supported = getPageDetails(tab).supported && Number.isInteger(tab.id);
+  input.disabled = !supported;
+  save.disabled = !supported;
+  restore.disabled = !supported;
+
+  form.append(input, save, restore);
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!supported) return;
+
+    const customTitle = input.value.trim();
+    if (!customTitle) {
+      setStatus("Enter a name before saving.", "error");
+      input.focus();
       return;
     }
 
-    let hostname = "This page";
-    try {
-      hostname = new URL(activeTab.url).hostname || hostname;
-    } catch {
-      // Restricted browser pages do not have a normal web origin.
+    input.disabled = true;
+    save.disabled = true;
+    restore.disabled = true;
+    setStatus("Saving tab name…");
+
+    const result = await sendTitleOperation(MESSAGE_TYPES.RENAME_TAB, tab.id, customTitle);
+    if (result?.ok) {
+      setStatus("Name saved for this tab.", "success");
+      await refreshTabs();
+    } else {
+      setStatus(result?.reason ?? "Could not rename this tab.", "error");
+      input.disabled = false;
+      save.disabled = false;
+      restore.disabled = !record;
     }
-    elements.pageName.textContent = hostname;
+  });
 
-    const record = await storageService.get(activeTab.id);
-    activeTab.hasCustomTitle = Boolean(record);
-    elements.input.value = record?.customTitle ?? "";
-    elements.restore.disabled = !record;
-    activeTab.originPattern = getOriginPattern(activeTab.url);
-    activeTab.isSupported = Boolean(activeTab.originPattern);
+  restore.addEventListener("click", async () => {
+    if (!supported || !record) return;
 
-    if (!activeTab.isSupported) {
-      elements.input.disabled = true;
-      elements.save.disabled = true;
-      setStatus("Chrome does not allow title changes on this page.", "error");
+    input.disabled = true;
+    save.disabled = true;
+    restore.disabled = true;
+    setStatus("Restoring original page title…");
+
+    const result = await sendTitleOperation(MESSAGE_TYPES.RESTORE_TAB, tab.id);
+    if (result?.ok) {
+      setStatus("Original title restored.", "success");
+      await refreshTabs();
+    } else {
+      setStatus(result?.reason ?? "Could not restore this tab.", "error");
+      input.disabled = false;
+      save.disabled = false;
+      restore.disabled = false;
+    }
+  });
+
+  card.append(heading, form);
+  if (!supported) {
+    const note = document.createElement("p");
+    note.className = "tab-card__note";
+    note.textContent = "Chrome does not allow title changes on this page.";
+    card.append(note);
+  }
+
+  return card;
+}
+
+async function refreshTabs() {
+  if (refreshInProgress) {
+    refreshRequested = true;
+    return;
+  }
+
+  refreshInProgress = true;
+  try {
+    const [tabs, records] = await Promise.all([
+      chrome.tabs.query({ currentWindow: true }),
+      storageService.getAll(),
+    ]);
+
+    tabs.sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+    elements.count.textContent = String(tabs.length);
+    elements.list.replaceChildren();
+
+    if (tabs.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "tab-list__empty";
+      empty.textContent = "No open tabs in this window.";
+      elements.list.append(empty);
+      return;
+    }
+
+    for (const tab of tabs) {
+      const record = records[String(tab.id)] ?? null;
+      elements.list.append(createTabCard(tab, record));
     }
   } catch (error) {
-    elements.pageName.textContent = "Could not read the active tab.";
-    setStatus("Unable to initialize TabRenamer. Try reopening the popup.", "error");
-    console.error("[TabRenamer] Popup initialization failed.", error);
+    console.error("[TabRenamer] Could not load tabs.", error);
+    setStatus("Unable to load tabs. Reopen the popup and try again.", "error");
+    elements.list.replaceChildren();
+    const empty = document.createElement("p");
+    empty.className = "tab-list__empty";
+    empty.textContent = "Tabs could not be loaded.";
+    elements.list.append(empty);
+  } finally {
+    refreshInProgress = false;
+    if (refreshRequested) {
+      refreshRequested = false;
+      void refreshTabs();
+    }
   }
 }
 
-elements.form.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  if (!activeTab?.isSupported) return;
+function refreshUnlessEditing() {
+  if (document.activeElement instanceof HTMLInputElement) return;
+  void refreshTabs();
+}
 
-  setBusy(true);
-  setStatus("Applying the custom title…");
-
-  const result = await sendTitleOperation({
-    type: MESSAGE_TYPES.RENAME_TAB,
-    payload: {
-      tabId: activeTab.id,
-      customTitle: elements.input.value,
-    },
-  });
-
-  if (result?.ok) {
-    activeTab.hasCustomTitle = true;
-    elements.restore.disabled = false;
-    setStatus("Custom tab name saved.", "success");
-  } else {
-    setStatus(result?.reason ?? "Could not rename this tab.", "error");
+chrome.tabs.onCreated.addListener(refreshUnlessEditing);
+chrome.tabs.onRemoved.addListener(refreshUnlessEditing);
+chrome.tabs.onActivated.addListener(refreshUnlessEditing);
+chrome.tabs.onUpdated.addListener((_tabId, changeInfo) => {
+  if (changeInfo.title || changeInfo.url || changeInfo.status === "complete") {
+    refreshUnlessEditing();
   }
-
-  setBusy(false);
 });
 
-elements.restore.addEventListener("click", async () => {
-  if (!activeTab?.isSupported || !activeTab.hasCustomTitle) return;
-
-  setBusy(true);
-  setStatus("Restoring the page title…");
-
-  const result = await sendTitleOperation({
-    type: MESSAGE_TYPES.RESTORE_TAB,
-    payload: { tabId: activeTab.id },
-  });
-
-  if (result?.ok) {
-    activeTab.hasCustomTitle = false;
-    elements.input.value = "";
-    elements.restore.disabled = true;
-    setStatus("Original page title restored.", "success");
-  } else {
-    setStatus(result?.reason ?? "Could not restore this tab.", "error");
-  }
-
-  setBusy(false);
-});
-
-void initialize();
+void refreshTabs();

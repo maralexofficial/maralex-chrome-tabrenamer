@@ -6,9 +6,11 @@ TabRenamer lets a user assign an independent custom title to each open Chrome
 tab. A title is scoped to the Chrome tab ID, not to the page URL.
 
 The v1.0 workflow supports:
-- Renaming from the extension popup.
-- Renaming from a tab context menu.
-- Restoring the page's original title.
+- Listing all tabs in the current window in the extension popup.
+- Renaming each supported tab independently from the popup.
+- Highlighting the active tab in the popup.
+- Restoring the original page title for a named tab.
+- Renaming and restoring from the page context menu.
 - Keeping the custom title while the same tab reloads or navigates, where the
   page permits script injection.
 
@@ -26,17 +28,21 @@ tab set whenever the worker starts. It must remain safe to suspend and restart.
 
 ### Popup and rename page
 
-`src/popup/` contains the active-tab popup UI. `src/rename/` contains the focused
-rename page opened by the tab context menu. Both are view layers; storage and
-tab operations belong in services.
+`src/popup/` contains the current-window tab manager. It queries Chrome for the
+current window's tabs, reads their session-scoped custom names, and sends all
+rename/restore mutations to the service worker. It refreshes when tabs are
+created, removed, activated, or materially updated, while avoiding rerenders
+during text input. `src/rename/` contains the focused rename page opened by
+the page context menu. Both are view layers; storage mutations belong in the
+service worker.
 
 ### Context menus
 
 `context-menu-service.js` registers a TabRenamer parent menu with Rename this
-tab… and Restore original page title actions. Rename opens a dedicated
-extension page with the clicked tab ID; restore delegates directly to
-`TitleService`. Menu items are rebuilt idempotently when the service worker
-starts.
+tab… and Restore original page title actions for page context menus. Rename
+opens a dedicated extension page with the clicked tab ID; restore delegates
+directly to `TitleService`. Menu items are rebuilt idempotently when the
+service worker starts.
 
 ### Content script
 
@@ -53,11 +59,6 @@ controller is idempotent within a document and supports explicit restoration.
   lifecycle event registration.
 - `title-service.js`: website permission verification, scoped dynamic content-script registration, title application/restoration, and navigation recovery.
 - `context-menu-service.js`: context-menu registration and action dispatch.
-
-### Shared modules
-
-`src/shared/` contains message contracts, constants, and input validation
-used across extension contexts.
 
 ## Data ownership and persistence
 
@@ -109,11 +110,12 @@ are enriched with `customTitle`, which is either the saved name or `null`.
 The URL is never used as an identity key.
 
 The extension requests HTTP and HTTPS website access once through required
-host permissions. The popup sends a validated title-operation message to the
-service worker without requesting per-site access. The worker
-re-reads the tab from Chrome, verifies the permission grant, applies the title,
-and performs all storage mutations through its single `StorageService`
-instance. This avoids popup/worker read-modify-write races.
+host permissions. The popup sends validated title-operation messages to the
+service worker without requesting per-site access. The worker re-reads each
+target tab from Chrome, verifies the permission grant, applies the title, and
+performs all storage mutations through its single `StorageService` instance.
+The popup only reads the session store to render names; it never writes tab
+records directly.
 
 The lifecycle adapter registers:
 - `tabs.onRemoved`: remove the closed tab's record.
@@ -124,17 +126,17 @@ cleanup failures are logged and do not escape the Chrome event callback.
 
 ## Permissions and access model
 
-The initial manifest requests only:
+The initial manifest requests:
 - `tabs`: enumerate and identify tabs.
 - `storage`: store session-scoped records.
-- `contextMenus`: provide tab context-menu actions.
+- `contextMenus`: provide page context-menu actions.
 - `scripting`: inject the title controller when permitted.
 
 The manifest declares HTTP and HTTPS origins as required host permissions.
 Chrome displays the broad website-access warning once when the user installs
 or updates the extension to this permission model. Saving or restoring a title
-does not trigger additional per-site permission prompts. Chrome-internal pages, extension
-pages, and other restricted origins cannot be modified.
+does not trigger additional per-site permission prompts. Chrome-internal pages,
+extension pages, and other restricted origins cannot be modified.
 
 ## Message protocol
 
@@ -155,8 +157,8 @@ malformed messages must be ignored safely.
   reconciliation.
 - EP3: title manager, observer, permission-aware injection, and navigation
   recovery (implemented).
-- EP4: tab context menu actions (implemented).
-- EP5: popup tab listing and editing.
+- EP4: page context menu actions (implemented).
+- EP5: current-window popup tab listing and per-tab editing (implemented).
 - EP6: permission failures, restricted pages, and lifecycle hardening.
 - EP7: unit, integration, and browser verification.
 - EP8: release documentation and packaging.
