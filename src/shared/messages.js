@@ -37,3 +37,26 @@ export function isExtensionMessage(value) {
     !Array.isArray(value.payload)
   );
 }
+
+/**
+ * Trust messages only from this extension's own pages. Extension pages opened
+ * in a tab legitimately have sender.tab set, so that field cannot be used to
+ * distinguish them from content scripts.
+ *
+ * @param {chrome.runtime.MessageSender} sender
+ * @param {string} extensionId
+ * @returns {boolean}
+ */
+export function isTrustedExtensionPageSender(sender, extensionId) {
+  if (!sender || sender.id !== extensionId || typeof sender.url !== "string") {
+    return false;
+  }
+
+  try {
+    const senderUrl = new URL(sender.url);
+    return senderUrl.protocol === "chrome-extension:" &&
+      senderUrl.hostname === extensionId;
+  } catch {
+    return false;
+  }
+}

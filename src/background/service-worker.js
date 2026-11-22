@@ -1,5 +1,5 @@
 import { EXTENSION_NAME, MESSAGE_TYPES } from "../shared/constants.js";
-import { isExtensionMessage } from "../shared/messages.js";
+import { isExtensionMessage, isTrustedExtensionPageSender } from "../shared/messages.js";
 import { StorageService } from "../services/storage-service.js";
 import { TabService, registerTabLifecycleListeners } from "../services/tab-service.js";
 import { TitleService, registerTitleNavigationListener } from "../services/title-service.js";
@@ -36,9 +36,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   }
 
-  // Only extension pages may initiate title operations. Content scripts are
-  // intentionally unable to mutate records or request tab operations.
-  if (sender.id !== chrome.runtime.id || sender.tab) return false;
+  // Only this extension's own pages may initiate title operations. A rename
+  // page opened as a tab has sender.tab set, just like a content script, so
+  // validate the sender URL and extension ID instead of rejecting sender.tab.
+  if (!isTrustedExtensionPageSender(sender, chrome.runtime.id)) return false;
 
   const payload = message.payload;
   if (!payload || !Number.isInteger(payload.tabId) || payload.tabId < 0) {
