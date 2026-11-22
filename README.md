@@ -5,12 +5,14 @@ name to each open browser tab.
 
 ## Current status
 
-**EP1 — Project foundation:** implemented.
+- **EP1 — Project foundation:** complete.
+- **EP2 — Storage and tab services:** implemented; automated tests included.
+- **EP3–EP8:** planned.
 
-The current version contains the extension manifest, service-worker entry
-point, shared message contracts and validation, a placeholder popup, automated
-unit tests, and project documentation. Tab renaming itself is not implemented
-yet; that work is planned for EP2–EP5.
+The current build includes session-scoped per-tab storage, a Chrome Tabs API
+facade, tab-close cleanup, replacement-ID migration, and startup reconciliation.
+The actual title controller, context-menu actions, and full popup workflow are
+not implemented yet.
 
 ## Requirements
 
