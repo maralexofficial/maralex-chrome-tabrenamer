@@ -1,55 +1,129 @@
 # TabRenamer
 
-A lightweight Manifest V3 Chrome extension for assigning an independent custom
-name to each open browser tab.
+Give each open browser tab its own custom title.
 
-## Current status
+TabRenamer helps you keep a busy browser organized. Give tabs clear, personal names, choose a color for each one, and find the tab you need at a glance.
 
-- **EP1 — Project foundation:** complete.
-- **EP2 — Storage and tab services:** implemented; automated tests included.
-- **EP3 — Title management:** implemented; automated tests included.
-- **EP4 — Separate rename page and context-menu workflow:** removed.
-- **EP5 — Popup and dedicated tab manager:** implemented; automated tests included.
-- **EP6 — Per-tab preset colors:** implemented; eight colors available in the popup and tab manager.
-- **EP7 — Error handling and lifecycle hardening:** complete.
-- **EP8 — Verification:** complete; 63 automated tests pass and all eight manual Chrome checks were confirmed successful.
-- **EP9 — Release documentation and packaging:** prepared; package creation and ZIP validation are automated. Store publication remains manual.
+## Table of contents
 
-The extension popup shows only the active tab and provides a direct rename and
-restore action. The **Manage all tabs** action opens the dedicated TabRenamer
-management page, where tabs in the current window can be searched, renamed,
-and restored independently. The management page is the extension's options
-page; it does not open a new page for each rename operation.
+- [Preface](#preface)
+- [About this repo](#about-this-repo)
+- [Quick Overview](#quick-overview)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Helpful notes](#helpful-notes)
+- [Troubleshooting](#troubleshooting)
+- [Authors](#authors)
+- [License](#license)
 
-Tab names are scoped to Chrome tab IDs and stored for the current browser
-session. The extension reapplies names after full page navigation where the
-page permits script injection.
+## Preface
 
-## Requirements
+Have you ever had several tabs open from the same website and lost track of which one was which? TabRenamer lets you give every tab its own name, so your browser stays easier to navigate.
 
-- Google Chrome 111 or newer
-- Node.js 20 or newer for automated tests
+## About this repo
 
-## Load in Chrome
+This repository contains TabRenamer, a Chrome extension designed to make managing open tabs simple.
 
-1. Open `chrome://extensions`.
-2. Enable **Developer mode**.
-3. Click **Load unpacked**.
-4. Select the repository root.
+**Powered by maralexofficial | Visit repository on GitHub**
 
-## Development
+[https://github.com/maralexofficial/maralex-chrome-tabrenamer](https://github.com/maralexofficial/maralex-chrome-tabrenamer)
 
-Run tests:
+> TabRenamer is not yet published in the Chrome Web Store. Until the first public release is available, you can install it manually using the instructions below.
 
-```sh
-npm test
-```
+## Quick Overview
 
-Validate the manifest:
+- Give every open tab its own custom title.
+- Rename the active tab directly from the extension popup.
+- Manage and search tabs in the current window from one place.
+- Choose from eight preset colors for each tab.
+- Restore a tab's original website title whenever you want.
+- Keep your custom names and colors during the current browser session.
 
-```sh
-npm run check:manifest
-```
+## Installation
 
-See [Development](docs/Development.md), [Architecture](docs/Architecture.md), and
-[Release](docs/Release.md) for more information.
+### Requirements
+
+- Google Chrome 111 or newer.
+
+### Install from this repository
+
+1. Download the repository:
+   - Click **Code** on the GitHub repository page.
+   - Choose **Download ZIP**.
+   - Extract the downloaded ZIP file to a folder on your computer.
+2. Open Google Chrome and enter `chrome://extensions` in the address bar.
+3. Turn on **Developer mode** using the switch in the top-right corner.
+4. Click **Load unpacked**.
+5. Select the extracted **maralex-chrome-tabrenamer** folder — the folder that contains `manifest.json`.
+6. TabRenamer should now appear in your extensions list. You can pin it to the toolbar using Chrome's puzzle-piece menu.
+
+### Update the extension
+
+1. Download and extract the latest repository version.
+2. Open `chrome://extensions`.
+3. Find TabRenamer and click **Remove** only if you need to replace the old folder or Chrome cannot reload it.
+4. Click **Load unpacked** and select the new extracted project folder.
+
+If you keep using the same folder, you can usually update the extension from its card with the **Reload** button after replacing the files.
+
+## Usage
+
+### Rename the active tab
+
+1. Click the TabRenamer icon in the Chrome toolbar.
+2. Enter the name you want to see on the current tab.
+3. Save your change.
+
+The tab title updates without opening a separate rename page.
+
+### Manage all open tabs
+
+1. Open the TabRenamer popup.
+2. Choose **Manage all tabs**.
+3. Search for a tab by its title or website.
+4. Enter a custom name and save it. Each tab is managed independently.
+
+### Choose a tab color
+
+Use the color choices shown for a tab in the popup or tab manager. You can select one of the eight preset colors or clear the color again.
+
+### Restore the original title
+
+Use the restore action for the tab. TabRenamer brings back the website's original title without requiring you to reload the page.
+
+## Helpful notes
+
+- **Your names are temporary:** custom names and colors are kept for the current browser session. They are not intended as permanent bookmarks or settings.
+- **Website access:** Chrome asks you to approve access to websites when installing the extension. This access is needed so TabRenamer can apply custom titles on supported websites.
+- **Some pages cannot be renamed:** Chrome-internal pages such as `chrome://settings`, the Chrome Web Store, and other restricted pages do not allow extensions to change their titles.
+- **Only your current window is managed:** the tab manager lists tabs in the current Chrome window and does not include its own management page.
+- **Original website content stays unchanged:** TabRenamer changes the displayed document title; it does not rewrite the page itself.
+
+## Troubleshooting
+
+**The extension does not appear in the toolbar**
+
+Open Chrome's extensions menu (the puzzle-piece icon) and pin TabRenamer to the toolbar.
+
+**Chrome says the page is not supported**
+
+Some browser pages are protected by Chrome and cannot be modified. Try a regular website that starts with `https://` or `http://`.
+
+**A custom name disappears after restarting Chrome**
+
+That is expected. TabRenamer currently stores names and colors for the current browser session only. Add the name again after starting a new session.
+
+**The extension does not reflect updated files**
+
+Open `chrome://extensions` and click **Reload** on the TabRenamer card. Then close and reopen the popup or tab manager.
+
+## Authors
+
+Created and maintained by **maralexofficial**.
+
+- GitHub: [@maralexofficial](https://github.com/maralexofficial)
+- Repository: [maralexofficial/maralex-chrome-tabrenamer](https://github.com/maralexofficial/maralex-chrome-tabrenamer)
+
+## License
+
+TabRenamer is distributed under the [MIT License](LICENSE).
