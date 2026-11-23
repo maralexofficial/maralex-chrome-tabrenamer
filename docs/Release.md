@@ -33,7 +33,7 @@ The archive is written to `dist/tabrenamer-v<VERSION>.zip`. The packaging script
 - [ ] Permission list and host access are reviewed; explain the broad HTTP/HTTPS access clearly in the store listing.
 - [ ] Run the packaging commands and inspect the archive contents.
 - [ ] Test the ZIP by loading its extracted directory with Chrome's **Load unpacked** flow.
-- [ ] Prepare store listing text, screenshots, support contact, and privacy disclosures.
+- [x] Draft store listing text, permission explanations, and privacy summary in [Store Listing](Store-Listing.md).\n- [ ] Capture final screenshots, provide a support contact and (if required) privacy policy URL, and complete the Developer Dashboard declarations.
 - [ ] Confirm the privacy policy accurately explains that tab names and colors are stored in `chrome.storage.session` and are not retained after the browser session/extension lifecycle described in the documentation.
 - [ ] Submit the archive through the Chrome Web Store Developer Dashboard and complete Google's review process.
 
