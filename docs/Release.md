@@ -8,7 +8,7 @@
 - Manifest V3
 - Release status: packaging is automated; Chrome Web Store publication is a separate manual action.
 
-The release archive contains only `manifest.json` and the complete `src/` directory. It deliberately excludes tests, documentation, Git metadata, and development files. No build step or third-party runtime dependency is required.
+The release archive contains `manifest.json`, the complete `src/` directory, and the `icons/` directory. It deliberately excludes tests, documentation, Git metadata, and development files. No build step or third-party runtime dependency is required.
 
 ## Build a package
 
@@ -23,7 +23,7 @@ npm run check:manifest
 npm run package
 ```
 
-The archive is written to `dist/tabrenamer-v<VERSION>.zip`. The packaging script reads the version from `manifest.json`, creates a clean staging directory, archives the extension runtime files, and validates the ZIP integrity.
+The archive is written to `dist/tabrenamer-v<VERSION>.zip`. The packaging script reads the version from `manifest.json`, creates a clean staging directory, archives the extension runtime files and icons, and validates the ZIP integrity.
 
 ## Pre-release checklist
 
@@ -31,9 +31,11 @@ The archive is written to `dist/tabrenamer-v<VERSION>.zip`. The packaging script
 - [ ] CI is green for the exact release commit.
 - [ ] `manifest.json` version is incremented according to the intended release.
 - [ ] Permission list and host access are reviewed; explain the broad HTTP/HTTPS access clearly in the store listing.
+- [x] Extension icons in 16, 32, 48, and 128 pixel sizes are included in the manifest and release archive.
 - [ ] Run the packaging commands and inspect the archive contents.
 - [ ] Test the ZIP by loading its extracted directory with Chrome's **Load unpacked** flow.
-- [x] Draft store listing text, permission explanations, and privacy summary in [Store Listing](Store-Listing.md).\n- [ ] Capture final screenshots, provide a support contact and (if required) privacy policy URL, and complete the Developer Dashboard declarations.
+- [x] Draft store listing text, permission explanations, and privacy summary in [Store Listing](Store-Listing.md).
+- [ ] Capture final screenshots, provide a support contact and (if required) privacy policy URL, and complete the Developer Dashboard declarations.
 - [ ] Confirm the privacy policy accurately explains that tab names and colors are stored in `chrome.storage.session` and are not retained after the browser session/extension lifecycle described in the documentation.
 - [ ] Submit the archive through the Chrome Web Store Developer Dashboard and complete Google's review process.
 

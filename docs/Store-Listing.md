@@ -6,13 +6,13 @@ TabRenamer
 
 ## Short description
 
-Give every browser tab its own custom title and color.
+Give each open browser tab its own custom title.
 
 ## Detailed description
 
-Keep busy browser windows organized with TabRenamer.
+Give each open browser tab its own custom title.
 
-TabRenamer lets you assign an independent custom name to each open tab. Rename the active tab directly from the extension popup, or open the tab manager to search, rename, and restore tabs across the current window.
+TabRenamer lets you assign an independent custom name to every open browser tab. Rename the active tab directly from the extension popup, or open the tab manager to search, rename, and restore tabs across the current window.
 
 Features:
 - Set a custom title for each tab independently, even when multiple tabs share the same website.
@@ -23,6 +23,9 @@ Features:
 - Store tab names and colors locally for the current browser session.
 
 TabRenamer does not change the actual website content beyond the document title. Chrome-internal pages and restricted pages cannot be renamed.
+
+Powered by maralexofficial | Visit repository on GitHub
+https://github.com/maralexofficial/maralex-chrome-tabrenamer
 
 ## Permission explanations
 
@@ -41,7 +44,6 @@ Review this text against the exact submitted build and the Chrome Web Store's cu
 
 ## Assets still required from publisher
 
-- Store icon in the required sizes.
-- Screenshots captured from the final release build.
+- Final screenshots captured from the release build.
 - Support contact and, if applicable, privacy policy URL.
 - Final privacy/data-use declarations in the Developer Dashboard.
