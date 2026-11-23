@@ -45,17 +45,37 @@ This repository contains TabRenamer, a Chrome extension designed to make managin
 
 - Google Chrome 111 or newer.
 
-### Install from this repository
+### Install using Git (alternative)
 
-1. Download the repository:
-   - Click **Code** on the GitHub repository page.
-   - Choose **Download ZIP**.
-   - Extract the downloaded ZIP file to a folder on your computer.
-2. Open Google Chrome and enter `chrome://extensions` in the address bar.
-3. Turn on **Developer mode** using the switch in the top-right corner.
-4. Click **Load unpacked**.
-5. Select the extracted **maralex-chrome-tabrenamer** folder — the folder that contains `manifest.json`.
-6. TabRenamer should now appear in your extensions list. You can pin it to the toolbar using Chrome's puzzle-piece menu.
+If Git is installed on your computer, you can clone the repository instead of downloading the ZIP file.
+
+1. Open a terminal (or Git Bash).
+2. Change to the directory where you want to keep the project.
+3. Run:
+
+   ```bash
+   git clone https://github.com/maralexofficial/maralex-chrome-tabrenamer.git
+   ```
+
+4. This creates a `maralex-chrome-tabrenamer` folder containing the extension.
+5. Open Google Chrome and enter `chrome://extensions` in the address bar.
+6. Turn on **Developer mode** using the switch in the top-right corner.
+7. Click **Load unpacked**.
+8. Select the cloned **maralex-chrome-tabrenamer** folder — the folder that contains `manifest.json`.
+9. TabRenamer should now appear in your extensions list. You can pin it to the toolbar using Chrome's puzzle-piece menu.
+
+To update a cloned copy later, open a terminal in the project folder and run `git pull`. Then open `chrome://extensions` and click **Reload** on the TabRenamer card.
+
+### Install by downloading ZIP
+
+1. Click **Code** on the GitHub repository page.
+2. Choose **Download ZIP**.
+3. Extract the downloaded ZIP file to a folder on your computer.
+4. Open Google Chrome and enter `chrome://extensions` in the address bar.
+5. Turn on **Developer mode** using the switch in the top-right corner.
+6. Click **Load unpacked**.
+7. Select the extracted **maralex-chrome-tabrenamer** folder — the folder that contains `manifest.json`.
+8. TabRenamer should now appear in your extensions list. You can pin it to the toolbar using Chrome's puzzle-piece menu.
 
 ### Update the extension
 
